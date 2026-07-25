@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Статус: Ожидание..."
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="40dp" />
+
+    <Button
+        android:id="@+id/btnConnect"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:text="ПОДКЛЮЧИТЬ / РАЗБУДИТЬ"
+        android:textSize="16sp"
+        android:layout_marginBottom="32dp" />
+
+    <Button
+        android:id="@+id/btnShoot"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:text="СДЕЛАТЬ ФОТО"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF"
+        android:enabled="false" /> <!-- Отключена до успешного подключения -->
+
+</LinearLayout>
