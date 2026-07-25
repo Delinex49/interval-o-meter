@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnConnect;
     private Button btnShoot;
 
-    private BleManager bleManager; // <-- ДОБАВЛЕНО
+    private BleManager bleManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,22 +35,30 @@ public class MainActivity extends AppCompatActivity {
         btnConnect = findViewById(R.id.btnConnect);
         btnShoot = findViewById(R.id.btnShoot);
 
-        // <-- ДОБАВЛЕНО: Инициализация BleManager
         bleManager = new BleManager(this, (status, isConnected) -> {
             updateUiState(status, isConnected);
         });
 
-        // <-- ОБНОВЛЕНО: Логика кнопки подключения
+        // Обычный клик - подключение
         btnConnect.setOnClickListener(v -> {
             if (btnConnect.getText().toString().equals("ОТКЛЮЧИТЬ")) {
                 bleManager.disconnect();
             } else {
                 if (hasPermissions()) {
-                    bleManager.startScan();
+                    bleManager.connectToCamera(); // <-- Теперь вызываем умное подключение
                 } else {
                     requestBlePermissions();
                 }
             }
+        });
+
+        // Долгое нажатие - забыть текущую камеру (очистить сохраненный MAC)
+        btnConnect.setOnLongClickListener(v -> {
+            if (!btnConnect.getText().toString().equals("ОТКЛЮЧИТЬ")) {
+                bleManager.forgetCamera();
+                Toast.makeText(MainActivity.this, "Память очищена. Камера забыта.", Toast.LENGTH_SHORT).show();
+            }
+            return true;
         });
 
         btnShoot.setOnClickListener(v -> {
@@ -64,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Проверка наличия всех необходимых разрешений
     private boolean hasPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
@@ -74,23 +81,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Запрос разрешений у пользователя
     private void requestBlePermissions() {
         List<String> permissions = new ArrayList<>();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Для Android 12+ (API 31+)
             permissions.add(Manifest.permission.BLUETOOTH_SCAN);
             permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
         } else {
-            // Для Android 11 и ниже (API 30-)
             permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
 
         ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), PERMISSION_REQUEST_CODE);
     }
 
-    // Обработка ответа пользователя на запрос разрешений
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -108,11 +111,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Публичный метод для обновления UI из BleManager
     public void updateUiState(String statusText, boolean isConnected) {
         runOnUiThread(() -> {
             tvStatus.setText(statusText);
             btnShoot.setEnabled(isConnected);
+            btnShoot.setAlpha(isConnected ? 1.0f : 0.5f); // Кнопка полупрозрачная пока не подключится
             btnConnect.setText(isConnected ? "ОТКЛЮЧИТЬ" : "ПОДКЛЮЧИТЬ / РАЗБУДИТЬ");
         });
     }

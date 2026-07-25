@@ -5,7 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic; // <-- ДОБАВЛЕН ИМПОРТ
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -15,6 +15,7 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
@@ -28,8 +29,9 @@ import java.util.UUID;
 public class BleManager {
 
     private static final String TAG = "BleManager";
+    private static final String PREF_NAME = "CanonRemotePrefs";
+    private static final String KEY_MAC = "camera_mac";
 
-    // UUID из репозитория Canon
     public static final UUID SERVICE_UUID = UUID.fromString("00050000-0000-1000-0000-d8492fffa821");
     public static final UUID PAIRING_CHAR_UUID = UUID.fromString("00050002-0000-1000-0000-d8492fffa821");
     public static final UUID SHUTTER_CHAR_UUID = UUID.fromString("00050003-0000-1000-0000-d8492fffa821");
@@ -59,14 +61,36 @@ public class BleManager {
         }
     }
 
-    public void startScan() {
-        if (bluetoothLeScanner == null || !bluetoothAdapter.isEnabled()) {
+    // НОВЫЙ МЕТОД: Умное подключение
+    public void connectToCamera() {
+        if (!bluetoothAdapter.isEnabled()) {
             updateStatus("Включите Bluetooth!", false);
             return;
         }
-        if (isScanning) return;
 
-        // Фильтруем устройства: ищем только те, что раздают сервис Canon
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        String savedMac = prefs.getString(KEY_MAC, null);
+
+        if (savedMac != null) {
+            // Если MAC сохранен - подключаемся напрямую без сканирования
+            updateStatus("Прямое подключение к камере...", false);
+            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(savedMac);
+            connectToDevice(device);
+        } else {
+            // Если MAC нет - запускаем скан
+            startScan();
+        }
+    }
+
+    // НОВЫЙ МЕТОД: Забыть камеру (для подключения другой)
+    public void forgetCamera() {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().remove(KEY_MAC).apply();
+    }
+
+    private void startScan() {
+        if (bluetoothLeScanner == null || isScanning) return;
+
         List<ScanFilter> filters = new ArrayList<>();
         filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(SERVICE_UUID)).build());
 
@@ -74,15 +98,14 @@ public class BleManager {
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build();
 
-        updateStatus("Поиск камеры...", false);
+        updateStatus("Поиск камеры (Режим сопряжения)...", false);
         isScanning = true;
         bluetoothLeScanner.startScan(filters, settings, scanCallback);
 
-        // Таймаут сканирования (15 секунд)
         mainHandler.postDelayed(this::stopScan, 15000);
     }
 
-    public void stopScan() {
+    private void stopScan() {
         if (!isScanning) return;
         isScanning = false;
         if (bluetoothLeScanner != null && bluetoothAdapter.isEnabled()) {
@@ -97,9 +120,8 @@ public class BleManager {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             BluetoothDevice device = result.getDevice();
-            Log.d(TAG, "Найдена камера Canon: " + device.getAddress());
-
-            stopScan(); // Как только нашли — прекращаем эфирный мусор
+            Log.d(TAG, "Найдена камера: " + device.getAddress());
+            stopScan();
             connectToDevice(device);
         }
 
@@ -111,8 +133,10 @@ public class BleManager {
     };
 
     private void connectToDevice(BluetoothDevice device) {
-        updateStatus("Подключение к камере...", false);
-        // autoConnect = false для быстрого прямого подключения
+        // Сохраняем MAC-адрес для будущих быстрых подключений
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(KEY_MAC, device.getAddress()).apply();
+
         bluetoothGatt = device.connectGatt(context, false, gattCallback);
     }
 
@@ -123,7 +147,7 @@ public class BleManager {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     Log.d(TAG, "Подключено к камере. Поиск сервисов...");
                     updateStatus("Открытие сервисов...", false);
-                    gatt.discoverServices(); // Обязательный шаг для работы с характеристиками
+                    gatt.discoverServices();
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     updateStatus("Отключено", false);
                     closeGatt();
@@ -140,11 +164,7 @@ public class BleManager {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 BluetoothGattService service = gatt.getService(SERVICE_UUID);
                 if (service != null) {
-                    Log.d(TAG, "Главный сервис Canon найден!");
                     updateStatus("Авторизация на камере...", false);
-
-                    // Вызываем метод сопряжения!
-                    // Камера увидит этот пульт под именем "AppRemote"
                     pairCamera("AppRemote");
                 } else {
                     updateStatus("Сервис Canon не найден", false);
@@ -162,13 +182,10 @@ public class BleManager {
                 } else if (characteristic.getUuid().equals(SHUTTER_CHAR_UUID)) {
                     Log.d(TAG, "Пакет затвора доставлен");
                 }
-            } else {
-                Log.e(TAG, "Ошибка записи характеристики: " + status);
             }
         }
-    }; // <-- УБРАНА ЛИШНЯЯ СКОБКА ЗДЕСЬ
+    };
 
-    // Метод сопряжения: отправляем имя устройства с префиксом 0x03
     @SuppressLint("MissingPermission")
     private void pairCamera(String deviceName) {
         if (bluetoothGatt == null) return;
@@ -178,17 +195,14 @@ public class BleManager {
         BluetoothGattCharacteristic pairChar = service.getCharacteristic(PAIRING_CHAR_UUID);
         if (pairChar == null) return;
 
-        // Логика из C++: строка " ИМЯ_ПУЛЬТА ", где первый пробел заменяется на байт 0x03
         String nameStr = " " + deviceName + " ";
         byte[] payload = nameStr.getBytes();
         payload[0] = 0x03;
 
         pairChar.setValue(payload);
         bluetoothGatt.writeCharacteristic(pairChar);
-        Log.d(TAG, "Отправлена команда сопряжения: " + deviceName);
     }
 
-    // Метод спуска затвора
     @SuppressLint("MissingPermission")
     public void triggerShoot() {
         if (bluetoothGatt == null) return;
@@ -198,12 +212,12 @@ public class BleManager {
         BluetoothGattCharacteristic triggerChar = service.getCharacteristic(SHUTTER_CHAR_UUID);
         if (triggerChar == null) return;
 
-        // Нажатие кнопки (BUTTON_RELEASE 0x80 | MODE_IMMEDIATE 0x0C) = 0x8C
+        triggerChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+
         byte[] pressPayload = {(byte) 0x8C};
         triggerChar.setValue(pressPayload);
         bluetoothGatt.writeCharacteristic(triggerChar);
 
-        // Отпускание кнопки через 200 мс (MODE_IMMEDIATE 0x0C)
         mainHandler.postDelayed(() -> {
             byte[] releasePayload = {(byte) 0x0C};
             triggerChar.setValue(releasePayload);
