@@ -20,6 +20,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
 import android.util.Log;
+import android.os.Build;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,8 @@ public class BleManager {
     private static final String TAG = "BleManager";
     private static final String PREF_NAME = "CanonRemotePrefs";
     private static final String KEY_MAC = "camera_mac";
+    private boolean isReconnecting = false;
+    private ScanCallback reconnectScanCallback;
 
     public static final UUID SERVICE_UUID = UUID.fromString("00050000-0000-1000-0000-d8492fffa821");
     public static final UUID PAIRING_CHAR_UUID = UUID.fromString("00050002-0000-1000-0000-d8492fffa821");
@@ -62,6 +65,7 @@ public class BleManager {
     }
 
     // НОВЫЙ МЕТОД: Умное подключение
+// НОВЫЙ МЕТОД: Умное подключение с предварительным "разогревом" сканера
     public void connectToCamera() {
         if (!bluetoothAdapter.isEnabled()) {
             updateStatus("Включите Bluetooth!", false);
@@ -72,12 +76,32 @@ public class BleManager {
         String savedMac = prefs.getString(KEY_MAC, null);
 
         if (savedMac != null) {
-            // Если MAC сохранен - подключаемся напрямую без сканирования
-            updateStatus("Прямое подключение к камере...", false);
-            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(savedMac);
-            connectToDevice(device);
+            updateStatus("Поиск камеры...", false);
+
+            // ТРЮК: Запускаем скан на 1 секунду, чтобы "взбодрить" Bluetooth-стек
+            List<ScanFilter> filters = new ArrayList<>();
+            ScanSettings settings = new ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .build();
+
+            ScanCallback dummyCallback = new ScanCallback() {
+                @Override
+                public void onScanResult(int callbackType, ScanResult result) {}
+            };
+
+            bluetoothLeScanner.startScan(filters, settings, dummyCallback);
+
+            // Через 1 секунду останавливаем скан и подключаемся напрямую
+            mainHandler.postDelayed(() -> {
+                if (bluetoothLeScanner != null) {
+                    bluetoothLeScanner.stopScan(dummyCallback);
+                }
+                BluetoothDevice device = bluetoothAdapter.getRemoteDevice(savedMac);
+                connectToDevice(device);
+            }, 1000);
+
         } else {
-            // Если MAC нет - запускаем скан
+            // Если MAC нет - запускаем полноценный скан для первого сопряжения
             startScan();
         }
     }
@@ -137,7 +161,13 @@ public class BleManager {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_MAC, device.getAddress()).apply();
 
-        bluetoothGatt = device.connectGatt(context, false, gattCallback);
+        boolean autoConnect = false;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            bluetoothGatt = device.connectGatt(context, autoConnect, gattCallback, BluetoothDevice.TRANSPORT_LE);
+        } else {
+            bluetoothGatt = device.connectGatt(context, autoConnect, gattCallback);
+        }
     }
 
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
@@ -233,6 +263,11 @@ public class BleManager {
 
     private void closeGatt() {
         if (bluetoothGatt != null) {
+            try {
+                bluetoothGatt.disconnect();
+            } catch (Exception e) {
+                Log.e(TAG, "Ошибка при отключении", e);
+            }
             bluetoothGatt.close();
             bluetoothGatt = null;
         }
