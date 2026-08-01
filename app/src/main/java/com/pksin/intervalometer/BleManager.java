@@ -76,29 +76,51 @@ public class BleManager {
         String savedMac = prefs.getString(KEY_MAC, null);
 
         if (savedMac != null) {
-            updateStatus("Поиск камеры...", false);
+            updateStatus("Ожидание сигнала от камеры...", false);
 
-            // ТРЮК: Запускаем скан на 1 секунду, чтобы "взбодрить" Bluetooth-стек
-            List<ScanFilter> filters = new ArrayList<>();
+            // Защита от двойного запуска
+            if (isReconnecting) return;
+            isReconnecting = true;
+
             ScanSettings settings = new ScanSettings.Builder()
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .build();
 
-            ScanCallback dummyCallback = new ScanCallback() {
+            reconnectScanCallback = new ScanCallback() {
                 @Override
-                public void onScanResult(int callbackType, ScanResult result) {}
+                public void onScanResult(int callbackType, ScanResult result) {
+                    if (isReconnecting && result.getDevice().getAddress().equals(savedMac)) {
+                        isReconnecting = false;
+
+                        // 1. Останавливаем сканирование
+                        bluetoothLeScanner.stopScan(this);
+                        updateStatus("Камера найдена, подключаюсь...", false);
+
+                        // 2. ВАЖНО: Даем аппаратному чипу 500 мс на переключение режимов!
+                        mainHandler.postDelayed(() -> {
+                            connectToDevice(result.getDevice());
+                        }, 500); // 500 миллисекунд задержки
+                    }
+                }
+
+                @Override
+                public void onScanFailed(int errorCode) {
+                    isReconnecting = false;
+                    updateStatus("Ошибка сканирования: " + errorCode, false);
+                }
             };
 
-            bluetoothLeScanner.startScan(filters, settings, dummyCallback);
+            // Начинаем слушать эфир
+            bluetoothLeScanner.startScan(null, settings, reconnectScanCallback);
 
-            // Через 1 секунду останавливаем скан и подключаемся напрямую
+            // Таймаут: если через 15 секунд камера так и не появилась в эфире
             mainHandler.postDelayed(() -> {
-                if (bluetoothLeScanner != null) {
-                    bluetoothLeScanner.stopScan(dummyCallback);
+                if (isReconnecting) {
+                    isReconnecting = false;
+                    bluetoothLeScanner.stopScan(reconnectScanCallback);
+                    updateStatus("Камера не найдена. Включите её и попробуйте снова.", false);
                 }
-                BluetoothDevice device = bluetoothAdapter.getRemoteDevice(savedMac);
-                connectToDevice(device);
-            }, 1000);
+            }, 15000);
 
         } else {
             // Если MAC нет - запускаем полноценный скан для первого сопряжения
@@ -157,10 +179,16 @@ public class BleManager {
     };
 
     private void connectToDevice(BluetoothDevice device) {
-        // Сохраняем MAC-адрес для будущих быстрых подключений
+        // ЖЕСТКАЯ ОЧИСТКА: убиваем старый GATT перед новым подключением
+        if (bluetoothGatt != null) {
+            bluetoothGatt.close();
+            bluetoothGatt = null;
+        }
+
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_MAC, device.getAddress()).apply();
 
+        // Оставляем false! Мы подключаемся только тогда, когда точно знаем, что камера в эфире.
         boolean autoConnect = false;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
