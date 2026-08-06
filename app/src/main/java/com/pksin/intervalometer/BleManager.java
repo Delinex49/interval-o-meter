@@ -21,7 +21,6 @@ import android.os.Looper;
 import android.os.ParcelUuid;
 import android.util.Log;
 import android.os.Build;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -47,6 +46,11 @@ public class BleManager {
     private Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean isScanning = false;
     private BleCallback callback;
+    private Runnable connectTimeoutRunnable = () -> {
+        Log.w(TAG, "Таймаут GATT подключения!");
+        updateStatus("Ошибка подключения. Попробуйте еще раз.", false);
+        closeGatt();
+    };
 
     public interface BleCallback {
         void onStatusUpdate(String status, boolean isConnected);
@@ -98,8 +102,11 @@ public class BleManager {
 
                         // 2. ВАЖНО: Даем аппаратному чипу 500 мс на переключение режимов!
                         mainHandler.postDelayed(() -> {
-                            connectToDevice(result.getDevice());
-                        }, 500); // 500 миллисекунд задержки
+                            BluetoothDevice freshDevice = bluetoothAdapter.getRemoteDevice(savedMac);
+                            new Thread(() -> {
+                                connectToDevice(freshDevice);
+                            }).start();
+                        }, 500);
                     }
                 }
 
@@ -179,17 +186,18 @@ public class BleManager {
     };
 
     private void connectToDevice(BluetoothDevice device) {
-        // ЖЕСТКАЯ ОЧИСТКА: убиваем старый GATT перед новым подключением
-        if (bluetoothGatt != null) {
-            bluetoothGatt.close();
-            bluetoothGatt = null;
-        }
+        // Обязательно закрываем прошлые зависшие соединения
+        closeGatt();
 
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_MAC, device.getAddress()).apply();
 
-        // Оставляем false! Мы подключаемся только тогда, когда точно знаем, что камера в эфире.
+        // ВСЕГДА false, так как мы вызвались СРАЗУ ПОСЛЕ обнаружения сканером
         boolean autoConnect = false;
+
+        mainHandler.removeCallbacks(connectTimeoutRunnable);
+        // Запускаем страховочный таймер на 8 секунд
+        mainHandler.postDelayed(connectTimeoutRunnable, 8000);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             bluetoothGatt = device.connectGatt(context, autoConnect, gattCallback, BluetoothDevice.TRANSPORT_LE);
@@ -201,6 +209,8 @@ public class BleManager {
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            mainHandler.removeCallbacks(connectTimeoutRunnable); // Снимаем страховочный таймер
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     Log.d(TAG, "Подключено к камере. Поиск сервисов...");
@@ -223,7 +233,12 @@ public class BleManager {
                 BluetoothGattService service = gatt.getService(SERVICE_UUID);
                 if (service != null) {
                     updateStatus("Авторизация на камере...", false);
-                    pairCamera("AppRemote");
+
+                    // Получаем модель телефона и формируем строку
+                    String deviceName = "IOM " + Build.MODEL;
+                    // Canon может обрезать слишком длинные имена, но обычно 20-30 символов влезает
+                    pairCamera(deviceName);
+
                 } else {
                     updateStatus("Сервис Canon не найден", false);
                     closeGatt();
