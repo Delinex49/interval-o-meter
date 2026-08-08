@@ -2,36 +2,250 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/black"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center">
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="48dp"
+    android:paddingBottom="20dp">
 
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Status: Idle..."
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="40dp" />
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Status: Idle"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnInstructions"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:backgroundTint="@color/dark_grey"
+            android:text="INFO"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+    </RelativeLayout>
 
     <Button
         android:id="@+id/btnConnect"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="52dp"
         android:text="CONNECT / WAKE"
-        android:textSize="16sp"
-        android:layout_marginBottom="32dp" />
+        android:backgroundTint="@color/accent_blue"
+        android:textColor="@color/white"
+        android:layout_marginBottom="20dp" />
 
-    <Button
-        android:id="@+id/btnShoot"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:text="TAKE PHOTO"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:backgroundTint="#D32F2F"
-        android:textColor="#FFFFFF"
-        android:enabled="false" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginEnd="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Interval (s)"
+                android:textColor="@color/light_grey"
+                android:textSize="11sp" />
+            <EditText
+                android:id="@+id/etInterval"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:text="5"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/light_grey" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start Delay (s)"
+                android:textColor="@color/light_grey"
+                android:textSize="11sp" />
+            <EditText
+                android:id="@+id/etStartDelay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="5"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/light_grey" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="12dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Shutter Press Duration (ms)"
+            android:textColor="@color/light_grey"
+            android:textSize="11sp" />
+        <EditText
+            android:id="@+id/etShutterDuration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="200"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/light_grey" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginEnd="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shots (0 = ∞)"
+                android:textColor="@color/light_grey"
+                android:textSize="11sp" />
+            <EditText
+                android:id="@+id/etPhotoCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="100"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/light_grey" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Video FPS"
+                android:textColor="@color/light_grey"
+                android:textSize="11sp" />
+            <EditText
+                android:id="@+id/etFps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="30"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/light_grey" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <CheckBox
+        android:id="@+id/cbAutoReconnect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Auto-Reconnect"
+        android:textColor="@color/white"
+        android:buttonTint="@color/accent_blue"
+        android:checked="true"
+        android:layout_marginBottom="16dp"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/dark_grey"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvTotalDuration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Time: 00:08:20"
+                android:textColor="@color/white"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/tvVideoLength"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Video: 3.3s"
+                android:textColor="@color/white"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvEndTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Est. End: --:--"
+            android:textColor="@color/accent_blue"
+            android:textStyle="bold"
+            android:layout_marginTop="4dp"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnShoot"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:text="START"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/accent_green"
+            android:textColor="@color/white"
+            android:layout_marginEnd="8dp"
+            android:enabled="false" />
+
+        <Button
+            android:id="@+id/btnSingleShot"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="PHOTO"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/dark_grey"
+            android:textColor="@color/white"
+            android:enabled="false" />
+    </LinearLayout>
 
 </LinearLayout>

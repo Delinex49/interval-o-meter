@@ -67,6 +67,7 @@ public class BleManager {
                     } else if (bondState == BluetoothDevice.BOND_NONE) {
                         Log.w(TAG, "Bonding failed or removed.");
                         updateStatus("Bonding failed. Reset camera BT settings.", false);
+                        if (callback != null) callback.onError(1, "Bonding failed");
                     }
                 }
             }
@@ -76,11 +77,14 @@ public class BleManager {
     private Runnable connectTimeoutRunnable = () -> {
         Log.w(TAG, "GATT connection timeout!");
         updateStatus("Connection timeout. Try again.", false);
+        if (callback != null) callback.onError(2, "Connection timeout");
         closeGatt();
     };
 
     public interface BleCallback {
         void onStatusUpdate(String status, boolean isConnected);
+        void onShutterDelivered();
+        void onError(int code, String message);
     }
 
     public BleManager(Context context, BleCallback callback) {
@@ -124,6 +128,7 @@ public class BleManager {
                     isReconnecting = false;
                     bluetoothLeScanner.stopScan(reconnectScanCallback);
                     updateStatus("Camera not found.", false);
+                    if (callback != null) callback.onError(3, "Camera not found during reconnect scan");
                 }
             }, 20000);
         } else {
@@ -146,6 +151,7 @@ public class BleManager {
         public void onScanFailed(int errorCode) {
             isReconnecting = false;
             updateStatus("Scan error: " + errorCode, false);
+            if (callback != null) callback.onError(errorCode, "Scan failed");
         }
     };
 
@@ -255,6 +261,7 @@ public class BleManager {
             } else {
                 Log.e(TAG, "GATT error: " + status);
                 updateStatus("GATT error: " + status, false);
+                if (callback != null) callback.onError(status, "GATT connection error: " + status);
                 closeGatt();
             }
         }
@@ -270,6 +277,7 @@ public class BleManager {
                     pairCamera("IOM " + Build.MODEL);
                 } else {
                     updateStatus("Service not found", false);
+                    if (callback != null) callback.onError(4, "Canon service not found");
                     closeGatt();
                 }
             }
@@ -282,7 +290,13 @@ public class BleManager {
                     Log.d(TAG, "Phone identified by camera!");
                     updateStatus("CONNECTED! Ready to shoot.", true);
                 } else if (characteristic.getUuid().equals(SHUTTER_CHAR_UUID)) {
-                    Log.d(TAG, "Trigger sent");
+                    byte[] value = characteristic.getValue();
+                    if (value != null && value.length > 0 && value[0] == 0x0C) {
+                        Log.d(TAG, "Shutter release packet delivered");
+                        if (callback != null) {
+                            mainHandler.post(() -> callback.onShutterDelivered());
+                        }
+                    }
                 }
             }
         }
@@ -304,7 +318,7 @@ public class BleManager {
         bluetoothGatt.writeCharacteristic(pairChar);
     }
 
-    public void triggerShoot() {
+    public void triggerShoot(long durationMs) {
         if (bluetoothGatt == null) return;
         BluetoothGattService service = bluetoothGatt.getService(SERVICE_UUID);
         if (service == null) return;
@@ -324,7 +338,7 @@ public class BleManager {
             if (bluetoothGatt != null) {
                 bluetoothGatt.writeCharacteristic(triggerChar);
             }
-        }, 200);
+        }, durationMs);
     }
 
     public void disconnect() {
@@ -371,5 +385,9 @@ public class BleManager {
                 callback.onStatusUpdate(status, isConnected);
             }
         });
+    }
+
+    public boolean isConnected() {
+        return bluetoothGatt != null;
     }
 }
