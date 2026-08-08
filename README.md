@@ -1,21 +1,27 @@
 <div align="center">
 
-# 📷 Canon EOS M50 BLE Remote & Intervalometer
+# 📷 Canon EOS M50 BLE Remote
 
 *A lightning-fast, native Android application to control your Canon mirrorless camera via Bluetooth Low Energy (BLE) — fully emulating the official **Canon BR-E1** remote.*
 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com)
 [![Java](https://img.shields.io/badge/Language-Java-007396?style=flat-square&logo=java&logoColor=white)](https://www.java.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Status: In Development](https://img.shields.io/badge/Status-Active%20Development-orange?style=flat-square)]()
+[![Status: Completed](https://img.shields.io/badge/Status-Completed%20%2F%20Archived-brightgreen?style=flat-square)]()
 
 </div>
 
 ---
 
-## 🎯 Project Goal
+> 📌 **Milestone Archive:** Development for this stage (**BLE Remote**) is **100% completed**. This branch is preserved as a standalone snapshot of the working Canon BR-E1 Bluetooth remote emulator. Further features and additions are developed in the main branch.
 
-To create a lightweight, highly responsive, and battery-efficient native Android application written purely in **Java** that interacts directly with the **Canon EOS M50** camera over BLE. By completely bypassing heavy cross-platform frameworks (like React Native or Flutter), this app ensures minimal latency and maximum reliability — serving as the core foundation for a custom **intervalometer**.
+---
+
+## 🎯 Stage Goal & Overview
+
+The primary goal of this phase was to build a lightweight, highly responsive, and battery-efficient native Android application written purely in **Java** that interacts directly with the **Canon EOS M50** camera over BLE. By completely bypassing heavy cross-platform frameworks (like React Native or Flutter), this app ensures minimal latency and maximum reliability.
+
+This stage marks the successful implementation and completion of the core **Canon BR-E1** hardware emulation logic.
 
 ---
 
@@ -30,9 +36,9 @@ To create a lightweight, highly responsive, and battery-efficient native Android
 
 ---
 
-## 🧠 Core Features (BR-E1 Emulation)
+## 🧠 Implemented Features (BR-E1 Emulation)
 
-The app connects to the camera acting as an official remote control and executes two main low-level commands:
+The app connects to the camera acting as an official remote control and executes low-level commands:
 
 1. 🔋 **BLE Wake-up:** Sends a custom BLE payload packet to wake up a sleeping Canon camera (initializing Wi-Fi/readiness state).
 2. 📸 **Shutter Press:** Dispatches a precise byte command via the BLE GATT service to instantly trigger a snapshot.
