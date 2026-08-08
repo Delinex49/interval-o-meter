@@ -39,20 +39,18 @@ public class MainActivity extends AppCompatActivity {
             updateUiState(status, isConnected);
         });
 
-        // Обычный клик - подключение
         btnConnect.setOnClickListener(v -> {
             if (btnConnect.getText().toString().equals("ОТКЛЮЧИТЬ")) {
                 bleManager.disconnect();
             } else {
                 if (hasPermissions()) {
-                    bleManager.connectToCamera(); // <-- Теперь вызываем умное подключение
+                    bleManager.connectToCamera();
                 } else {
                     requestBlePermissions();
                 }
             }
         });
 
-        // Долгое нажатие - забыть текущую камеру (очистить сохраненный MAC)
         btnConnect.setOnLongClickListener(v -> {
             if (!btnConnect.getText().toString().equals("ОТКЛЮЧИТЬ")) {
                 bleManager.forgetCamera();
@@ -115,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(() -> {
             tvStatus.setText(statusText);
             btnShoot.setEnabled(isConnected);
-            btnShoot.setAlpha(isConnected ? 1.0f : 0.5f); // Кнопка полупрозрачная пока не подключится
+            btnShoot.setAlpha(isConnected ? 1.0f : 0.5f);
             btnConnect.setText(isConnected ? "ОТКЛЮЧИТЬ" : "ПОДКЛЮЧИТЬ / РАЗБУДИТЬ");
         });
     }

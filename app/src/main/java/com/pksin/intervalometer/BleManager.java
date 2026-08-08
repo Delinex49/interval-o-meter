@@ -68,8 +68,6 @@ public class BleManager {
         }
     }
 
-    // НОВЫЙ МЕТОД: Умное подключение
-// НОВЫЙ МЕТОД: Умное подключение с предварительным "разогревом" сканера
     public void connectToCamera() {
         if (!bluetoothAdapter.isEnabled()) {
             updateStatus("Включите Bluetooth!", false);
@@ -82,7 +80,6 @@ public class BleManager {
         if (savedMac != null) {
             updateStatus("Ожидание сигнала от камеры...", false);
 
-            // Защита от двойного запуска
             if (isReconnecting) return;
             isReconnecting = true;
 
@@ -96,11 +93,9 @@ public class BleManager {
                     if (isReconnecting && result.getDevice().getAddress().equals(savedMac)) {
                         isReconnecting = false;
 
-                        // 1. Останавливаем сканирование
                         bluetoothLeScanner.stopScan(this);
-                        updateStatus("Камера найдена, подключаюсь...", false);
+                        updateStatus("Камера найдена, подключаемся...", false);
 
-                        // 2. ВАЖНО: Даем аппаратному чипу 500 мс на переключение режимов!
                         mainHandler.postDelayed(() -> {
                             BluetoothDevice freshDevice = bluetoothAdapter.getRemoteDevice(savedMac);
                             new Thread(() -> {
@@ -117,10 +112,8 @@ public class BleManager {
                 }
             };
 
-            // Начинаем слушать эфир
             bluetoothLeScanner.startScan(null, settings, reconnectScanCallback);
 
-            // Таймаут: если через 15 секунд камера так и не появилась в эфире
             mainHandler.postDelayed(() -> {
                 if (isReconnecting) {
                     isReconnecting = false;
@@ -130,12 +123,10 @@ public class BleManager {
             }, 15000);
 
         } else {
-            // Если MAC нет - запускаем полноценный скан для первого сопряжения
             startScan();
         }
     }
 
-    // НОВЫЙ МЕТОД: Забыть камеру (для подключения другой)
     public void forgetCamera() {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().remove(KEY_MAC).apply();
@@ -186,17 +177,14 @@ public class BleManager {
     };
 
     private void connectToDevice(BluetoothDevice device) {
-        // Обязательно закрываем прошлые зависшие соединения
         closeGatt();
 
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_MAC, device.getAddress()).apply();
 
-        // ВСЕГДА false, так как мы вызвались СРАЗУ ПОСЛЕ обнаружения сканером
         boolean autoConnect = false;
 
         mainHandler.removeCallbacks(connectTimeoutRunnable);
-        // Запускаем страховочный таймер на 8 секунд
         mainHandler.postDelayed(connectTimeoutRunnable, 8000);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -209,12 +197,12 @@ public class BleManager {
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            mainHandler.removeCallbacks(connectTimeoutRunnable); // Снимаем страховочный таймер
+            mainHandler.removeCallbacks(connectTimeoutRunnable);
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     Log.d(TAG, "Подключено к камере. Поиск сервисов...");
-                    updateStatus("Открытие сервисов...", false);
+                    updateStatus("Авторизация на камере...", false);
                     gatt.discoverServices();
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     updateStatus("Отключено", false);
@@ -234,9 +222,7 @@ public class BleManager {
                 if (service != null) {
                     updateStatus("Авторизация на камере...", false);
 
-                    // Получаем модель телефона и формируем строку
                     String deviceName = "IOM " + Build.MODEL;
-                    // Canon может обрезать слишком длинные имена, но обычно 20-30 символов влезает
                     pairCamera(deviceName);
 
                 } else {
