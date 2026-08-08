@@ -14,13 +14,17 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
 import android.util.Log;
 import android.os.Build;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,8 +35,6 @@ public class BleManager {
     private static final String TAG = "BleManager";
     private static final String PREF_NAME = "CanonRemotePrefs";
     private static final String KEY_MAC = "camera_mac";
-    private boolean isReconnecting = false;
-    private ScanCallback reconnectScanCallback;
 
     public static final UUID SERVICE_UUID = UUID.fromString("00050000-0000-1000-0000-d8492fffa821");
     public static final UUID PAIRING_CHAR_UUID = UUID.fromString("00050002-0000-1000-0000-d8492fffa821");
@@ -45,10 +47,35 @@ public class BleManager {
 
     private Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean isScanning = false;
+    private boolean isReconnecting = false;
     private BleCallback callback;
+
+    private final BroadcastReceiver bondReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE);
+
+                if (device != null && bluetoothGatt != null && device.getAddress().equals(bluetoothGatt.getDevice().getAddress())) {
+                    if (bondState == BluetoothDevice.BOND_BONDED) {
+                        Log.d(TAG, "Bonded successfully. Discovering services...");
+                        mainHandler.postDelayed(() -> {
+                            if (bluetoothGatt != null) bluetoothGatt.discoverServices();
+                        }, 600);
+                    } else if (bondState == BluetoothDevice.BOND_NONE) {
+                        Log.w(TAG, "Bonding failed or removed.");
+                        updateStatus("Bonding failed. Reset camera BT settings.", false);
+                    }
+                }
+            }
+        }
+    };
+
     private Runnable connectTimeoutRunnable = () -> {
-        Log.w(TAG, "Таймаут GATT подключения!");
-        updateStatus("Ошибка подключения. Попробуйте еще раз.", false);
+        Log.w(TAG, "GATT connection timeout!");
+        updateStatus("Connection timeout. Try again.", false);
         closeGatt();
     };
 
@@ -66,11 +93,12 @@ public class BleManager {
                 bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
             }
         }
+        context.registerReceiver(bondReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
     }
 
     public void connectToCamera() {
         if (!bluetoothAdapter.isEnabled()) {
-            updateStatus("Включите Bluetooth!", false);
+            updateStatus("Enable Bluetooth!", false);
             return;
         }
 
@@ -78,8 +106,7 @@ public class BleManager {
         String savedMac = prefs.getString(KEY_MAC, null);
 
         if (savedMac != null) {
-            updateStatus("Ожидание сигнала от камеры...", false);
-
+            updateStatus("Waiting for camera signal...", false);
             if (isReconnecting) return;
             isReconnecting = true;
 
@@ -87,49 +114,58 @@ public class BleManager {
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .build();
 
-            reconnectScanCallback = new ScanCallback() {
-                @Override
-                public void onScanResult(int callbackType, ScanResult result) {
-                    if (isReconnecting && result.getDevice().getAddress().equals(savedMac)) {
-                        isReconnecting = false;
+            List<ScanFilter> filters = new ArrayList<>();
+            filters.add(new ScanFilter.Builder().setDeviceAddress(savedMac).build());
 
-                        bluetoothLeScanner.stopScan(this);
-                        updateStatus("Камера найдена, подключаемся...", false);
-
-                        mainHandler.postDelayed(() -> {
-                            BluetoothDevice freshDevice = bluetoothAdapter.getRemoteDevice(savedMac);
-                            new Thread(() -> {
-                                connectToDevice(freshDevice);
-                            }).start();
-                        }, 500);
-                    }
-                }
-
-                @Override
-                public void onScanFailed(int errorCode) {
-                    isReconnecting = false;
-                    updateStatus("Ошибка сканирования: " + errorCode, false);
-                }
-            };
-
-            bluetoothLeScanner.startScan(null, settings, reconnectScanCallback);
+            bluetoothLeScanner.startScan(filters, settings, reconnectScanCallback);
 
             mainHandler.postDelayed(() -> {
                 if (isReconnecting) {
                     isReconnecting = false;
                     bluetoothLeScanner.stopScan(reconnectScanCallback);
-                    updateStatus("Камера не найдена. Включите её и попробуйте снова.", false);
+                    updateStatus("Camera not found.", false);
                 }
-            }, 15000);
-
+            }, 20000);
         } else {
             startScan();
         }
     }
 
+    private final ScanCallback reconnectScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            if (isReconnecting) {
+                isReconnecting = false;
+                bluetoothLeScanner.stopScan(this);
+                updateStatus("Camera found, connecting...", false);
+                connectToDevice(result.getDevice());
+            }
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            isReconnecting = false;
+            updateStatus("Scan error: " + errorCode, false);
+        }
+    };
+
     public void forgetCamera() {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        String mac = prefs.getString(KEY_MAC, null);
+        if (mac != null) {
+            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(mac);
+            unpairDevice(device);
+        }
         prefs.edit().remove(KEY_MAC).apply();
+    }
+
+    private void unpairDevice(BluetoothDevice device) {
+        try {
+            Method m = device.getClass().getMethod("removeBond", (Class[]) null);
+            m.invoke(device, (Object[]) null);
+        } catch (Exception e) {
+            Log.e(TAG, "Removing bond failed", e);
+        }
     }
 
     private void startScan() {
@@ -142,7 +178,7 @@ public class BleManager {
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build();
 
-        updateStatus("Поиск камеры (Режим сопряжения)...", false);
+        updateStatus("Searching for camera (Pairing mode)...", false);
         isScanning = true;
         bluetoothLeScanner.startScan(filters, settings, scanCallback);
 
@@ -155,8 +191,8 @@ public class BleManager {
         if (bluetoothLeScanner != null && bluetoothAdapter.isEnabled()) {
             bluetoothLeScanner.stopScan(scanCallback);
         }
-        if (bluetoothGatt == null) {
-            updateStatus("Камера не найдена", false);
+        if (bluetoothGatt == null && !isReconnecting) {
+            updateStatus("Camera not found", false);
         }
     }
 
@@ -164,14 +200,14 @@ public class BleManager {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             BluetoothDevice device = result.getDevice();
-            Log.d(TAG, "Найдена камера: " + device.getAddress());
+            Log.d(TAG, "Camera found: " + device.getAddress());
             stopScan();
             connectToDevice(device);
         }
 
         @Override
         public void onScanFailed(int errorCode) {
-            updateStatus("Ошибка сканирования: " + errorCode, false);
+            updateStatus("Scan error: " + errorCode, false);
             isScanning = false;
         }
     };
@@ -182,51 +218,58 @@ public class BleManager {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_MAC, device.getAddress()).apply();
 
-        boolean autoConnect = false;
-
         mainHandler.removeCallbacks(connectTimeoutRunnable);
-        mainHandler.postDelayed(connectTimeoutRunnable, 8000);
+        mainHandler.postDelayed(connectTimeoutRunnable, 20000);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            bluetoothGatt = device.connectGatt(context, autoConnect, gattCallback, BluetoothDevice.TRANSPORT_LE);
+            bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
         } else {
-            bluetoothGatt = device.connectGatt(context, autoConnect, gattCallback);
+            bluetoothGatt = device.connectGatt(context, false, gattCallback);
         }
     }
 
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            mainHandler.removeCallbacks(connectTimeoutRunnable);
-
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    Log.d(TAG, "Подключено к камере. Поиск сервисов...");
-                    updateStatus("Авторизация на камере...", false);
-                    gatt.discoverServices();
+                    Log.d(TAG, "GATT Connected. Waiting for encryption...");
+                    updateStatus("Establishing link...", false);
+                    
+                    mainHandler.postDelayed(() -> {
+                        if (bluetoothGatt != null) {
+                            if (bluetoothGatt.getDevice().getBondState() == BluetoothDevice.BOND_NONE) {
+                                Log.d(TAG, "Initiating system bond...");
+                                bluetoothGatt.getDevice().createBond();
+                            } else {
+                                Log.d(TAG, "Already bonded, discovering services...");
+                                bluetoothGatt.discoverServices();
+                            }
+                        }
+                    }, 1000);
+                    
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    updateStatus("Отключено", false);
+                    updateStatus("Disconnected", false);
                     closeGatt();
                 }
             } else {
-                updateStatus("Ошибка GATT подключения: " + status, false);
+                Log.e(TAG, "GATT error: " + status);
+                updateStatus("GATT error: " + status, false);
                 closeGatt();
             }
         }
 
         @Override
-        @SuppressLint("MissingPermission")
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            mainHandler.removeCallbacks(connectTimeoutRunnable);
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 BluetoothGattService service = gatt.getService(SERVICE_UUID);
                 if (service != null) {
-                    updateStatus("Авторизация на камере...", false);
-
-                    String deviceName = "IOM " + Build.MODEL;
-                    pairCamera(deviceName);
-
+                    Log.d(TAG, "Canon service found. Identifying phone...");
+                    updateStatus("Identifying phone...", false);
+                    pairCamera("IOM " + Build.MODEL);
                 } else {
-                    updateStatus("Сервис Canon не найден", false);
+                    updateStatus("Service not found", false);
                     closeGatt();
                 }
             }
@@ -236,16 +279,15 @@ public class BleManager {
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (characteristic.getUuid().equals(PAIRING_CHAR_UUID)) {
-                    Log.d(TAG, "Сопряжение успешно завершено!");
-                    updateStatus("ПОДКЛЮЧЕНО! Можно снимать.", true);
+                    Log.d(TAG, "Phone identified by camera!");
+                    updateStatus("CONNECTED! Ready to shoot.", true);
                 } else if (characteristic.getUuid().equals(SHUTTER_CHAR_UUID)) {
-                    Log.d(TAG, "Пакет затвора доставлен");
+                    Log.d(TAG, "Trigger sent");
                 }
             }
         }
     };
 
-    @SuppressLint("MissingPermission")
     private void pairCamera(String deviceName) {
         if (bluetoothGatt == null) return;
         BluetoothGattService service = bluetoothGatt.getService(SERVICE_UUID);
@@ -262,7 +304,6 @@ public class BleManager {
         bluetoothGatt.writeCharacteristic(pairChar);
     }
 
-    @SuppressLint("MissingPermission")
     public void triggerShoot() {
         if (bluetoothGatt == null) return;
         BluetoothGattService service = bluetoothGatt.getService(SERVICE_UUID);
@@ -280,7 +321,9 @@ public class BleManager {
         mainHandler.postDelayed(() -> {
             byte[] releasePayload = {(byte) 0x0C};
             triggerChar.setValue(releasePayload);
-            bluetoothGatt.writeCharacteristic(triggerChar);
+            if (bluetoothGatt != null) {
+                bluetoothGatt.writeCharacteristic(triggerChar);
+            }
         }, 200);
     }
 
@@ -290,16 +333,36 @@ public class BleManager {
         }
     }
 
+    public void onDestroy() {
+        try {
+            context.unregisterReceiver(bondReceiver);
+        } catch (Exception ignored) {}
+        closeGatt();
+    }
+
     private void closeGatt() {
         if (bluetoothGatt != null) {
             try {
+                refreshDeviceCache(bluetoothGatt);
                 bluetoothGatt.disconnect();
+                bluetoothGatt.close();
             } catch (Exception e) {
-                Log.e(TAG, "Ошибка при отключении", e);
+                Log.e(TAG, "Cleanup error", e);
             }
-            bluetoothGatt.close();
             bluetoothGatt = null;
         }
+    }
+
+    private boolean refreshDeviceCache(BluetoothGatt gatt) {
+        try {
+            Method localMethod = gatt.getClass().getMethod("refresh", (Class[]) null);
+            if (localMethod != null) {
+                return (Boolean) localMethod.invoke(gatt, (Object[]) null);
+            }
+        } catch (Exception localException) {
+            Log.e(TAG, "Cache refresh failed");
+        }
+        return false;
     }
 
     private void updateStatus(String status, boolean isConnected) {

@@ -10,7 +10,7 @@
         android:id="@+id/tvStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Статус: Ожидание..."
+        android:text="Status: Idle..."
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_marginBottom="40dp" />
@@ -19,7 +19,7 @@
         android:id="@+id/btnConnect"
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:text="ПОДКЛЮЧИТЬ / РАЗБУДИТЬ"
+        android:text="CONNECT / WAKE"
         android:textSize="16sp"
         android:layout_marginBottom="32dp" />
 
@@ -27,11 +27,11 @@
         android:id="@+id/btnShoot"
         android:layout_width="match_parent"
         android:layout_height="120dp"
-        android:text="СДЕЛАТЬ ФОТО"
+        android:text="TAKE PHOTO"
         android:textSize="24sp"
         android:textStyle="bold"
         android:backgroundTint="#D32F2F"
         android:textColor="#FFFFFF"
-        android:enabled="false" /> <!-- Отключена до успешного подключения -->
+        android:enabled="false" />
 
 </LinearLayout>

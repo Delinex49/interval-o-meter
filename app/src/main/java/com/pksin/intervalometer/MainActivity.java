@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnConnect.setOnClickListener(v -> {
-            if (btnConnect.getText().toString().equals("ОТКЛЮЧИТЬ")) {
+            if (btnConnect.getText().toString().equals("DISCONNECT")) {
                 bleManager.disconnect();
             } else {
                 if (hasPermissions()) {
@@ -52,9 +52,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnConnect.setOnLongClickListener(v -> {
-            if (!btnConnect.getText().toString().equals("ОТКЛЮЧИТЬ")) {
+            if (!btnConnect.getText().toString().equals("DISCONNECT")) {
                 bleManager.forgetCamera();
-                Toast.makeText(MainActivity.this, "Память очищена. Камера забыта.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Memory cleared. Camera forgotten.", Toast.LENGTH_SHORT).show();
             }
             return true;
         });
@@ -67,6 +67,14 @@ public class MainActivity extends AppCompatActivity {
 
         if (!hasPermissions()) {
             requestBlePermissions();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (bleManager != null) {
+            bleManager.onDestroy();
         }
     }
 
@@ -104,17 +112,17 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             if (!allGranted) {
-                Toast.makeText(this, "Для работы с камерой необходимы разрешения Bluetooth/Геолокации", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Bluetooth/Location permissions required for camera operation", Toast.LENGTH_LONG).show();
             }
         }
     }
 
     public void updateUiState(String statusText, boolean isConnected) {
         runOnUiThread(() -> {
-            tvStatus.setText(statusText);
+            tvStatus.setText("Status: " + statusText);
             btnShoot.setEnabled(isConnected);
             btnShoot.setAlpha(isConnected ? 1.0f : 0.5f);
-            btnConnect.setText(isConnected ? "ОТКЛЮЧИТЬ" : "ПОДКЛЮЧИТЬ / РАЗБУДИТЬ");
+            btnConnect.setText(isConnected ? "DISCONNECT" : "CONNECT / WAKE");
         });
     }
 }
