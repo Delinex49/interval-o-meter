@@ -7,9 +7,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.Button;
@@ -58,6 +61,12 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(() -> updateIntervalometerButton(false));
                 }
             });
+            
+            // Sync UI state immediately upon connection
+            runOnUiThread(() -> {
+                updateIntervalometerButton(intervalService.isIntervalometerRunning());
+                updateUiState(intervalService.getLastStatus(), intervalService.isConnected());
+            });
         }
 
         @Override
@@ -73,9 +82,11 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
         setupListeners();
-        startAndBindService();
 
-        if (!hasPermissions()) {
+        if (hasPermissions()) {
+            startAndBindService();
+            checkBatteryOptimization();
+        } else {
             requestBlePermissions();
         }
     }
@@ -108,6 +119,24 @@ public class MainActivity extends AppCompatActivity {
             startService(intent);
         }
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    private void checkBatteryOptimization() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+            if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Battery Optimization")
+                        .setMessage("To keep the intervalometer stable when the screen is off, please set battery usage to 'Unrestricted' in the next screen.")
+                        .setPositiveButton("Configure", (dialog, which) -> {
+                            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                            intent.setData(Uri.parse("package:" + getPackageName()));
+                            startActivity(intent);
+                        })
+                        .setNegativeButton("Ignore", null)
+                        .show();
+            }
+        }
     }
 
     private void setupListeners() {
@@ -279,6 +308,25 @@ public class MainActivity extends AppCompatActivity {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS);
         }
         ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), PERMISSION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            if (allGranted) {
+                startAndBindService();
+            } else {
+                Toast.makeText(this, "Permissions required for intervalometer", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     public void updateUiState(String statusText, boolean isConnected) {

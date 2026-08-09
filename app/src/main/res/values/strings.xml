@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Intervalometer</string>
+    <string name="err_connection_lost">Connection lost (Camera too far?)</string>
+    <string name="err_disconnected">Camera disconnected.</string>
+    <string name="err_timeout">Connection timeout. Please restart camera.</string>
+    <string name="err_pairing">Pairing failed. Try re-pairing.</string>
+    <string name="err_busy">Phone Bluetooth is busy.</string>
+    <string name="err_generic">Link error (Code %1$d)</string>
 </resources>

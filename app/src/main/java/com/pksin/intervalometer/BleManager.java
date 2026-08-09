@@ -76,8 +76,9 @@ public class BleManager {
 
     private Runnable connectTimeoutRunnable = () -> {
         Log.w(TAG, "GATT connection timeout!");
-        updateStatus("Connection timeout. Try again.", false);
-        if (callback != null) callback.onError(2, "Connection timeout");
+        String msg = getFriendlyErrorMessage(133);
+        updateStatus(msg, false);
+        if (callback != null) callback.onError(2, msg);
         closeGatt();
     };
 
@@ -127,8 +128,9 @@ public class BleManager {
                 if (isReconnecting) {
                     isReconnecting = false;
                     bluetoothLeScanner.stopScan(reconnectScanCallback);
-                    updateStatus("Camera not found.", false);
-                    if (callback != null) callback.onError(3, "Camera not found during reconnect scan");
+                    String msg = "Camera not found. Is it on?";
+                    updateStatus(msg, false);
+                    if (callback != null) callback.onError(3, msg);
                 }
             }, 20000);
         } else {
@@ -150,8 +152,9 @@ public class BleManager {
         @Override
         public void onScanFailed(int errorCode) {
             isReconnecting = false;
-            updateStatus("Scan error: " + errorCode, false);
-            if (callback != null) callback.onError(errorCode, "Scan failed");
+            String msg = "Scan failed (error " + errorCode + ")";
+            updateStatus(msg, false);
+            if (callback != null) callback.onError(errorCode, msg);
         }
     };
 
@@ -184,7 +187,7 @@ public class BleManager {
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build();
 
-        updateStatus("Searching for camera (Pairing mode)...", false);
+        updateStatus("Searching for camera...", false);
         isScanning = true;
         bluetoothLeScanner.startScan(filters, settings, scanCallback);
 
@@ -213,7 +216,7 @@ public class BleManager {
 
         @Override
         public void onScanFailed(int errorCode) {
-            updateStatus("Scan error: " + errorCode, false);
+            updateStatus("Scan failed: " + errorCode, false);
             isScanning = false;
         }
     };
@@ -260,8 +263,9 @@ public class BleManager {
                 }
             } else {
                 Log.e(TAG, "GATT error: " + status);
-                updateStatus("GATT error: " + status, false);
-                if (callback != null) callback.onError(status, "GATT connection error: " + status);
+                String msg = getFriendlyErrorMessage(status);
+                updateStatus(msg, false);
+                if (callback != null) callback.onError(status, msg);
                 closeGatt();
             }
         }
@@ -276,8 +280,9 @@ public class BleManager {
                     updateStatus("Identifying phone...", false);
                     pairCamera("IOM " + Build.MODEL);
                 } else {
-                    updateStatus("Service not found", false);
-                    if (callback != null) callback.onError(4, "Canon service not found");
+                    String msg = "Canon service not found";
+                    updateStatus(msg, false);
+                    if (callback != null) callback.onError(4, msg);
                     closeGatt();
                 }
             }
@@ -389,5 +394,22 @@ public class BleManager {
 
     public boolean isConnected() {
         return bluetoothGatt != null;
+    }
+
+    private String getFriendlyErrorMessage(int status) {
+        switch (status) {
+            case 8:
+                return context.getString(R.string.err_connection_lost);
+            case 19:
+                return context.getString(R.string.err_disconnected);
+            case 133:
+                return context.getString(R.string.err_timeout);
+            case 62:
+                return context.getString(R.string.err_pairing);
+            case 34:
+                return context.getString(R.string.err_busy);
+            default:
+                return context.getString(R.string.err_generic, status);
+        }
     }
 }

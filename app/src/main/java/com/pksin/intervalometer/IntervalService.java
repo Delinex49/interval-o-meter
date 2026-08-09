@@ -18,7 +18,6 @@ import androidx.core.app.NotificationCompat;
 
 public class IntervalService extends Service implements BleManager.BleCallback {
 
-    private static final String TAG = "IntervalService";
     private static final String CHANNEL_ID = "IntervalometerChannel";
     private static final int NOTIFICATION_ID = 1;
 
@@ -35,6 +34,10 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     private int currentShot = 0;
     private boolean isIntervalometerRunning = false;
     private boolean isWaitingForReconnect = false;
+    private boolean pendingShot = false;
+    private long lastShotTime = 0;
+    private String lastStatus = "Idle";
+    private boolean isConnected = false;
     private ServiceCallback uiCallback;
 
     public interface ServiceCallback {
@@ -80,6 +83,8 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     }
 
     public void startIntervalometer(int interval, int count, int shutter, int delay, boolean reconnect) {
+        if (isIntervalometerRunning) return;
+
         this.intervalSec = interval;
         this.photoCount = count;
         this.shutterDurationMs = shutter;
@@ -91,11 +96,13 @@ public class IntervalService extends Service implements BleManager.BleCallback {
         
         if (!wakeLock.isHeld()) wakeLock.acquire(3600000);
         
+        handler.removeCallbacksAndMessages(null);
         handler.postDelayed(this::takeNextShot, delay * 1000L);
     }
 
     public void stopIntervalometer() {
         isIntervalometerRunning = false;
+        isWaitingForReconnect = false;
         handler.removeCallbacksAndMessages(null);
         if (wakeLock.isHeld()) wakeLock.release();
         updateNotification("Intervalometer Stopped");
@@ -107,12 +114,21 @@ public class IntervalService extends Service implements BleManager.BleCallback {
 
         if (bleManager != null && bleManager.isConnected()) {
             isWaitingForReconnect = false;
+            pendingShot = false;
+            long now = System.currentTimeMillis();
+            if (lastShotTime > 0) {
+                Log.d("IntervalTimer", "Interval gap: " + (now - lastShotTime) + "ms");
+            }
+            lastShotTime = now;
             bleManager.triggerShoot(shutterDurationMs);
         } else {
             if (autoReconnect) {
-                isWaitingForReconnect = true;
-                updateNotification("Connection lost. Searching...");
-                bleManager.connectToCamera();
+                if (!isWaitingForReconnect) {
+                    isWaitingForReconnect = true;
+                    pendingShot = true;
+                    updateNotification("Connection lost. Searching...");
+                    bleManager.connectToCamera();
+                }
             } else {
                 stopSelfWithNotification("Connection lost. Session stopped.");
             }
@@ -127,7 +143,7 @@ public class IntervalService extends Service implements BleManager.BleCallback {
         updateNotification("Shot " + currentShot + (photoCount > 0 ? " / " + photoCount : ""));
 
         if (photoCount > 0 && currentShot >= photoCount) {
-            stopSelfWithNotification("Session complete! " + currentShot + " shots taken.");
+            stopSelfWithNotification("Session complete! " + currentShot + " photos taken.");
         } else {
             handler.postDelayed(this::takeNextShot, intervalSec * 1000L);
         }
@@ -135,18 +151,26 @@ public class IntervalService extends Service implements BleManager.BleCallback {
 
     @Override
     public void onStatusUpdate(String status, boolean isConnected) {
+        this.lastStatus = status;
+        this.isConnected = isConnected;
         if (uiCallback != null) uiCallback.onStatusUpdate(status, isConnected);
         
-        if (isWaitingForReconnect && isConnected) {
+        if (isConnected && pendingShot) {
+            isWaitingForReconnect = false;
+            pendingShot = false;
+            updateNotification("Reconnected! Firing missed shot...");
+            handler.removeCallbacksAndMessages(null);
+            handler.postDelayed(this::takeNextShot, 500);
+        } else if (isWaitingForReconnect && isConnected) {
             isWaitingForReconnect = false;
             updateNotification("Reconnected! Resuming...");
+            handler.removeCallbacksAndMessages(null);
             handler.postDelayed(this::takeNextShot, 1000);
         }
     }
 
     @Override
     public void onError(int code, String message) {
-        Log.e(TAG, "BLE Error: " + code + " - " + message);
         if (isIntervalometerRunning && !autoReconnect) {
             stopSelfWithNotification("Error: " + message);
         }
@@ -154,7 +178,9 @@ public class IntervalService extends Service implements BleManager.BleCallback {
 
     private void stopSelfWithNotification(String message) {
         isIntervalometerRunning = false;
+        isWaitingForReconnect = false;
         if (wakeLock.isHeld()) wakeLock.release();
+        handler.removeCallbacksAndMessages(null);
         
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -172,7 +198,7 @@ public class IntervalService extends Service implements BleManager.BleCallback {
 
     private void updateNotification(String text) {
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        manager.notify(NOTIFICATION_ID, createNotification(text));
+        if (manager != null) manager.notify(NOTIFICATION_ID, createNotification(text));
     }
 
     private Notification createNotification(String text) {
@@ -218,5 +244,13 @@ public class IntervalService extends Service implements BleManager.BleCallback {
 
     public boolean isIntervalometerRunning() {
         return isIntervalometerRunning;
+    }
+
+    public String getLastStatus() {
+        return lastStatus;
+    }
+
+    public boolean isConnected() {
+        return isConnected;
     }
 }
