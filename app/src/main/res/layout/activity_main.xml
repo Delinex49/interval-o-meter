@@ -9,6 +9,7 @@
     android:paddingTop="48dp"
     android:paddingBottom="20dp">
 
+    <!-- Status and Info Bar -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -24,15 +25,31 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btnInstructions"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:backgroundTint="@color/dark_grey"
-            android:text="INFO"
-            android:textColor="@color/white"
-            android:textSize="12sp" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnInstructions"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:backgroundTint="@color/dark_grey"
+                android:text="INFO"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/btnExit"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:backgroundTint="@color/accent_red"
+                android:text="EXIT"
+                android:textColor="@color/white"
+                android:textSize="11sp" />
+        </LinearLayout>
     </RelativeLayout>
 
     <Button
@@ -44,11 +61,12 @@
         android:textColor="@color/white"
         android:layout_marginBottom="20dp" />
 
+    <!-- Interval Settings Row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="4dp">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -94,6 +112,18 @@
         </LinearLayout>
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/tvBusyWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Warning: Intervals &lt; 2s may cause camera 'Busy' errors"
+        android:textColor="@color/accent_red"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Shutter Press row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -115,6 +145,7 @@
             android:backgroundTint="@color/light_grey" />
     </LinearLayout>
 
+    <!-- Session Settings Row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -176,6 +207,7 @@
         android:layout_marginBottom="16dp"
         android:textSize="13sp" />
 
+    <!-- Info Box (Compressed) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

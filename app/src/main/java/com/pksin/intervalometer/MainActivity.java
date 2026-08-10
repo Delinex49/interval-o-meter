@@ -15,6 +15,7 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -35,8 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 100;
 
-    private TextView tvStatus, tvTotalDuration, tvVideoLength, tvEndTime;
-    private Button btnConnect, btnShoot, btnSingleShot, btnInstructions;
+    private TextView tvStatus, tvTotalDuration, tvVideoLength, tvEndTime, tvBusyWarning;
+    private Button btnConnect, btnShoot, btnSingleShot, btnInstructions, btnExit;
     private EditText etInterval, etStartDelay, etShutterDuration, etPhotoCount, etFps;
     private CheckBox cbAutoReconnect;
 
@@ -62,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             
-            // Sync UI state immediately upon connection
             runOnUiThread(() -> {
                 updateIntervalometerButton(intervalService.isIntervalometerRunning());
                 updateUiState(intervalService.getLastStatus(), intervalService.isConnected());
@@ -96,11 +96,13 @@ public class MainActivity extends AppCompatActivity {
         tvTotalDuration = findViewById(R.id.tvTotalDuration);
         tvVideoLength = findViewById(R.id.tvVideoLength);
         tvEndTime = findViewById(R.id.tvEndTime);
+        tvBusyWarning = findViewById(R.id.tvBusyWarning);
         
         btnConnect = findViewById(R.id.btnConnect);
         btnShoot = findViewById(R.id.btnShoot);
         btnSingleShot = findViewById(R.id.btnSingleShot);
         btnInstructions = findViewById(R.id.btnInstructions);
+        btnExit = findViewById(R.id.btnExit);
         
         etInterval = findViewById(R.id.etInterval);
         etStartDelay = findViewById(R.id.etStartDelay);
@@ -174,6 +176,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnInstructions.setOnClickListener(v -> showInstructions());
+        
+        btnExit.setOnClickListener(v -> {
+            if (isBound) {
+                intervalService.stopServiceCompletely();
+            }
+            finishAndRemoveTask();
+        });
 
         TextWatcher watcher = new TextWatcher() {
             @Override
@@ -196,7 +205,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void calculateResults() {
         try {
-            double interval = Double.parseDouble(etInterval.getText().toString());
+            String intervalStr = etInterval.getText().toString();
+            double interval = intervalStr.isEmpty() ? 0 : Double.parseDouble(intervalStr);
+            
+            tvBusyWarning.setVisibility(interval > 0 && interval < 2.0 ? View.VISIBLE : View.GONE);
+            
             int delay = Integer.parseInt(etStartDelay.getText().toString());
             int count = Integer.parseInt(etPhotoCount.getText().toString());
             int fps = Integer.parseInt(etFps.getText().toString());
@@ -314,15 +327,16 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            boolean allGranted = true;
+            boolean allGrantedResult = true;
             for (int result : grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
-                    allGranted = false;
+                    allGrantedResult = false;
                     break;
                 }
             }
-            if (allGranted) {
+            if (allGrantedResult) {
                 startAndBindService();
+                checkBatteryOptimization();
             } else {
                 Toast.makeText(this, "Permissions required for intervalometer", Toast.LENGTH_LONG).show();
             }

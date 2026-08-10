@@ -10,3 +10,5 @@
 local.properties
 /references
 /key
+/app/release
+.artifacts
