@@ -1,33 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material 3 Dark Palette -->
-    <color name="primary">#D0BCFF</color>
-    <color name="onPrimary">#381E72</color>
-    <color name="primaryContainer">#4F378B</color>
-    <color name="onPrimaryContainer">#EADDFF</color>
+    <!-- Bogart Neutral Palette -->
+    <color name="bogart_bg">#1D2326</color>
+    <color name="bogart_cream">#DDDCC5</color>
+    <color name="bogart_tan">#958976</color>
+    <color name="bogart_burgundy">#611427</color>
+    <color name="bogart_grey">#6A6A61</color>
 
-    <color name="secondary">#CCC2DC</color>
-    <color name="onSecondary">#332D41</color>
+    <!-- Material 3 Mappings (Dark) -->
+    <color name="primary">@color/bogart_cream</color>
+    <color name="onPrimary">@color/bogart_bg</color>
+    <color name="primaryContainer">@color/bogart_grey</color>
+    <color name="onPrimaryContainer">@color/bogart_cream</color>
 
-    <color name="tertiary">#EFB8C8</color>
-    <color name="onTertiary">#492532</color>
+    <color name="secondary">@color/bogart_tan</color>
+    <color name="onSecondary">@color/bogart_bg</color>
 
-    <color name="background">#1C1B1F</color>
-    <color name="onBackground">#E6E1E5</color>
-    <color name="surface">#1C1B1F</color>
-    <color name="onSurface">#E6E1E5</color>
-    <color name="surfaceVariant">#49454F</color>
-    <color name="onSurfaceVariant">#CAC4D0</color>
+    <color name="background">@color/bogart_bg</color>
+    <color name="onBackground">@color/bogart_cream</color>
+    <color name="surface">@color/bogart_bg</color>
+    <color name="onSurface">@color/bogart_cream</color>
+    <color name="surfaceVariant">@color/bogart_grey</color>
+    <color name="onSurfaceVariant">@color/bogart_cream</color>
 
-    <color name="error">#F2B8B5</color>
-    <color name="onError">#601410</color>
+    <color name="error">@color/bogart_burgundy</color>
+    <color name="onError">@color/bogart_cream</color>
 
     <!-- App Specific -->
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
-    <color name="dark_grey">#FF121212</color>
-    <color name="light_grey">#FFBDBDBD</color>
-    <color name="canon_red">#FF0000</color>
+    <color name="canon_red">@color/bogart_burgundy</color>
     <color name="success_green">#4CAF50</color>
-    <color name="warning_yellow">#FFC107</color>
 </resources>

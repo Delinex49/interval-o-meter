@@ -7,14 +7,14 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
-import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+
+import java.util.Locale;
 
 public class IntervalService extends Service implements BleManager.BleCallback {
 
@@ -35,7 +35,7 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     private boolean isIntervalometerRunning = false;
     private boolean isWaitingForReconnect = false;
     private boolean pendingShot = false;
-    private String lastStatus = "Idle";
+    private String lastStatus;
     private boolean isConnected = false;
     private ServiceCallback uiCallback;
 
@@ -53,15 +53,18 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     @Override
     public void onCreate() {
         super.onCreate();
+        lastStatus = getString(R.string.msg_idle);
         createNotificationChannel();
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Intervalometer:WakeLock");
+        if (powerManager != null) {
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Intervalometer:WakeLock");
+        }
         bleManager = new BleManager(this, this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startForeground(NOTIFICATION_ID, createNotification("Service Active"));
+        startForeground(NOTIFICATION_ID, createNotification(getString(R.string.app_name)));
         return START_STICKY;
     }
 
@@ -91,12 +94,22 @@ public class IntervalService extends Service implements BleManager.BleCallback {
 
         isIntervalometerRunning = true;
         currentShot = 0;
-        updateNotification("Starting in " + delay + "s...");
         
-        if (!wakeLock.isHeld()) wakeLock.acquire(3600000);
+        if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire(3600000);
         
         handler.removeCallbacksAndMessages(null);
-        handler.postDelayed(this::takeNextShot, delay * 1000L);
+        startCountdown(delay);
+    }
+
+    private void startCountdown(int seconds) {
+        if (!isIntervalometerRunning) return;
+
+        if (seconds > 0) {
+            updateNotification(getString(R.string.msg_starting_in, seconds));
+            handler.postDelayed(() -> startCountdown(seconds - 1), 1000L);
+        } else {
+            takeNextShot();
+        }
     }
 
     public void stopIntervalometer() {
@@ -104,15 +117,15 @@ public class IntervalService extends Service implements BleManager.BleCallback {
         isWaitingForReconnect = false;
         pendingShot = false;
         handler.removeCallbacksAndMessages(null);
-        if (wakeLock.isHeld()) wakeLock.release();
-        updateNotification("Intervalometer Stopped");
+        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+        updateNotification(getString(R.string.msg_idle));
         if (uiCallback != null) uiCallback.onIntervalometerStopped();
     }
 
     public void stopServiceCompletely() {
         stopIntervalometer();
         if (bleManager != null) bleManager.disconnect();
-        stopForeground(true);
+        stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
 
@@ -128,11 +141,11 @@ public class IntervalService extends Service implements BleManager.BleCallback {
                 if (!isWaitingForReconnect) {
                     isWaitingForReconnect = true;
                     pendingShot = true;
-                    updateNotification("Connection lost. Searching...");
+                    updateNotification(getString(R.string.msg_connection_lost_searching));
                     bleManager.connectToCamera();
                 }
             } else {
-                stopSelfWithNotification("Connection lost. Session stopped.");
+                stopSelfWithNotification(getString(R.string.msg_connection_lost_stopped));
             }
         }
     }
@@ -142,10 +155,16 @@ public class IntervalService extends Service implements BleManager.BleCallback {
         if (!isIntervalometerRunning) return;
         
         currentShot++;
-        updateNotification("Shot " + currentShot + (photoCount > 0 ? " / " + photoCount : ""));
+        String progress;
+        if (photoCount > 0) {
+            progress = getString(R.string.msg_shot_progress, currentShot, photoCount);
+        } else {
+            progress = getString(R.string.msg_shot_infinite, currentShot);
+        }
+        updateNotification(progress);
 
         if (photoCount > 0 && currentShot >= photoCount) {
-            stopSelfWithNotification("Session complete! " + currentShot + " photos taken.");
+            stopSelfWithNotification(getString(R.string.msg_session_complete, currentShot));
         } else {
             handler.postDelayed(this::takeNextShot, intervalSec * 1000L);
         }
@@ -160,12 +179,12 @@ public class IntervalService extends Service implements BleManager.BleCallback {
         if (isConnected && pendingShot) {
             isWaitingForReconnect = false;
             pendingShot = false;
-            updateNotification("Reconnected! Firing shot...");
+            updateNotification(getString(R.string.msg_reconnected_firing));
             handler.removeCallbacksAndMessages(null);
             handler.postDelayed(this::takeNextShot, 500);
         } else if (isWaitingForReconnect && isConnected) {
             isWaitingForReconnect = false;
-            updateNotification("Reconnected! Resuming...");
+            updateNotification(getString(R.string.msg_reconnected_resuming));
             handler.removeCallbacksAndMessages(null);
             handler.postDelayed(this::takeNextShot, 1000);
         }
@@ -174,37 +193,39 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     @Override
     public void onError(int code, String message) {
         if (isIntervalometerRunning && !autoReconnect) {
-            stopSelfWithNotification("Error: " + message);
+            stopSelfWithNotification(message);
         }
     }
 
     private void stopSelfWithNotification(String message) {
         isIntervalometerRunning = false;
         isWaitingForReconnect = false;
-        if (wakeLock.isHeld()) wakeLock.release();
+        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         handler.removeCallbacksAndMessages(null);
         
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Session Finished")
-                .setContentText(message)
-                .setSmallIcon(android.R.drawable.ic_menu_camera)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .build();
-        manager.notify(NOTIFICATION_ID + 1, notification);
+        if (manager != null) {
+            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setContentTitle(getString(R.string.btn_stop))
+                    .setContentText(message)
+                    .setSmallIcon(android.R.drawable.ic_menu_camera)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .build();
+            manager.notify(NOTIFICATION_ID + 1, notification);
+        }
         
         if (uiCallback != null) uiCallback.onIntervalometerStopped();
-        updateNotification("Ready");
+        updateNotification(getString(R.string.msg_idle));
     }
 
     private void updateNotification(String text) {
+        this.lastStatus = text;
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (manager != null) {
-            this.lastStatus = text;
             manager.notify(NOTIFICATION_ID, createNotification(text));
-            if (uiCallback != null) uiCallback.onStatusUpdate(text, isConnected);
         }
+        if (uiCallback != null) uiCallback.onStatusUpdate(text, isConnected);
     }
 
     private Notification createNotification(String text) {
@@ -213,7 +234,7 @@ public class IntervalService extends Service implements BleManager.BleCallback {
                 PendingIntent.FLAG_IMMUTABLE);
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Canon Intervalometer")
+                .setContentTitle(getString(R.string.app_name))
                 .setContentText(text)
                 .setSmallIcon(android.R.drawable.ic_menu_camera)
                 .setContentIntent(pendingIntent)
@@ -223,15 +244,13 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     }
 
     private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel serviceChannel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "Intervalometer Status",
-                    NotificationManager.IMPORTANCE_LOW
-            );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) manager.createNotificationChannel(serviceChannel);
-        }
+        NotificationChannel serviceChannel = new NotificationChannel(
+                CHANNEL_ID,
+                "Intervalometer Status",
+                NotificationManager.IMPORTANCE_LOW
+        );
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager != null) manager.createNotificationChannel(serviceChannel);
     }
 
     @Override
@@ -242,7 +261,7 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     @Override
     public void onDestroy() {
         isIntervalometerRunning = false;
-        if (wakeLock.isHeld()) wakeLock.release();
+        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         if (bleManager != null) bleManager.onDestroy();
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();

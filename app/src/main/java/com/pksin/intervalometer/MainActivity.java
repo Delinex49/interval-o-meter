@@ -29,7 +29,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
@@ -44,8 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private TextView tvStatus, tvDrawerStatus, tvTotalDuration, tvVideoLength, tvEndTime, tvBusyWarning;
-    private MaterialButton btnConnectDrawer, btnShoot, btnSingleShot, btnExit;
-    private ImageButton btnInstructions;
+    private MaterialButton btnConnectDrawer, btnShoot, btnSingleShot;
     private NumberPicker npInterval, npStartDelay, npShutterDuration, npPhotoCount, npFps;
     private MaterialSwitch swAutoReconnect;
 
@@ -113,8 +111,6 @@ public class MainActivity extends AppCompatActivity {
         btnConnectDrawer = findViewById(R.id.btnConnectDrawer);
         btnShoot = findViewById(R.id.btnShoot);
         btnSingleShot = findViewById(R.id.btnSingleShot);
-        btnExit = findViewById(R.id.btnExit);
-        btnInstructions = findViewById(R.id.btnInstructions);
         
         npInterval = findViewById(R.id.npInterval);
         npStartDelay = findViewById(R.id.npStartDelay);
@@ -124,9 +120,8 @@ public class MainActivity extends AppCompatActivity {
         
         swAutoReconnect = findViewById(R.id.swAutoReconnect);
 
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setNavigationOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
-        btnInstructions.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
+        findViewById(R.id.toolbar).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+        findViewById(R.id.btnInstructions).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
     }
 
     private void setupPickers() {
@@ -177,36 +172,30 @@ public class MainActivity extends AppCompatActivity {
 
     private void startAndBindService() {
         Intent intent = new Intent(this, IntervalService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
-        } else {
-            startService(intent);
-        }
+        startForegroundService(intent);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 
     private void checkBatteryOptimization() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-            if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
-                new AlertDialog.Builder(this)
-                        .setTitle("Battery Optimization")
-                        .setMessage("To keep the intervalometer stable when the screen is off, please set battery usage to 'Unrestricted'.")
-                        .setPositiveButton("Configure", (dialog, which) -> {
-                            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                            intent.setData(Uri.parse("package:" + getPackageName()));
-                            startActivity(intent);
-                        })
-                        .setNegativeButton("Ignore", null)
-                        .show();
-            }
+        PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+        if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.battery_title)
+                    .setMessage(R.string.battery_msg)
+                    .setPositiveButton(R.string.btn_configure, (dialog, which) -> {
+                        Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivity(intent);
+                    })
+                    .setNegativeButton(R.string.btn_ignore, null)
+                    .show();
         }
     }
 
     private void setupListeners() {
         btnConnectDrawer.setOnClickListener(v -> {
             if (!isBound) return;
-            if (btnConnectDrawer.getText().toString().contains("DISCONNECT")) {
+            if (btnConnectDrawer.getText().toString().contains(getString(R.string.btn_disconnect))) {
                 intervalService.disconnect();
             } else {
                 if (hasPermissions()) {
@@ -223,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
             if (isBound) intervalService.triggerSingleShot(npShutterDuration.getValue());
         });
         
-        btnExit.setOnClickListener(v -> {
+        findViewById(R.id.btnExit).setOnClickListener(v -> {
             if (isBound) intervalService.stopServiceCompletely();
             finishAndRemoveTask();
         });
@@ -237,12 +226,12 @@ public class MainActivity extends AppCompatActivity {
         int count = npPhotoCount.getValue();
         int fps = npFps.getValue();
 
-        tvBusyWarning.setVisibility(interval < 2 ? View.VISIBLE : View.GONE);
+        tvBusyWarning.setVisibility(interval < 2 ? View.VISIBLE : View.INVISIBLE);
 
         if (count == 0) {
-            tvTotalDuration.setText("Shooting Time: Infinite");
-            tvVideoLength.setText("Video Length: Unknown");
-            tvEndTime.setText("Estimated End: Never");
+            tvTotalDuration.setText(R.string.label_time_infinite);
+            tvVideoLength.setText(R.string.label_video_unknown);
+            tvEndTime.setText(R.string.label_est_never);
             return;
         }
 
@@ -251,15 +240,14 @@ public class MainActivity extends AppCompatActivity {
         long mins = (totalSec % 3600) / 60;
         long secs = totalSec % 60;
         
-        tvTotalDuration.setText(String.format(Locale.US, "Shooting Time: %02d:%02d:%02d", hours, mins, secs));
+        tvTotalDuration.setText(getString(R.string.label_time, hours, mins, secs));
 
         double videoSec = (double) count / fps;
-        tvVideoLength.setText(String.format(Locale.US, "Video Length: %.1fs", videoSec));
+        tvVideoLength.setText(getString(R.string.label_video_length, videoSec));
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.SECOND, (int) totalSec);
-        tvEndTime.setText(String.format(Locale.US, "Estimated End: %02d:%02d", 
-                cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)));
+        tvEndTime.setText(getString(R.string.label_est_end, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)));
     }
 
     private void toggleIntervalometer() {
@@ -281,9 +269,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateIntervalometerButton(boolean isRunning) {
-        btnShoot.setText(isRunning ? "STOP" : "START");
+        btnShoot.setText(isRunning ? R.string.btn_stop : R.string.btn_start);
         btnShoot.setBackgroundTintList(ContextCompat.getColorStateList(this, 
-                isRunning ? android.R.color.holo_red_dark : android.R.color.holo_green_dark));
+                isRunning ? R.color.bogart_burgundy : R.color.success_green));
     }
 
     private boolean hasPermissions() {
@@ -297,6 +285,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             needed.add(Manifest.permission.POST_NOTIFICATIONS);
         }
+        
         for (String p : needed) {
             if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) return false;
         }
@@ -332,22 +321,22 @@ public class MainActivity extends AppCompatActivity {
                 startAndBindService();
                 checkBatteryOptimization();
             } else {
-                Toast.makeText(this, "Permissions required", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.msg_permissions_required, Toast.LENGTH_LONG).show();
             }
         }
     }
 
     public void updateUiState(String statusText, boolean isConnected) {
         runOnUiThread(() -> {
-            tvStatus.setText("Status: " + statusText);
-            tvDrawerStatus.setText("Status: " + statusText);
+            tvStatus.setText(getString(R.string.label_status, statusText));
+            tvDrawerStatus.setText(getString(R.string.label_status, statusText));
             
             btnShoot.setEnabled(isConnected || (isBound && intervalService.isIntervalometerRunning()));
             btnSingleShot.setEnabled(isConnected);
             
-            btnConnectDrawer.setText(isConnected ? "DISCONNECT" : "CONNECT / WAKE");
+            btnConnectDrawer.setText(isConnected ? R.string.btn_disconnect : R.string.btn_connect);
             btnConnectDrawer.setBackgroundTintList(ContextCompat.getColorStateList(this, 
-                    isConnected ? android.R.color.holo_red_dark : R.color.primary));
+                    isConnected ? R.color.bogart_burgundy : R.color.bogart_tan));
         });
     }
 
@@ -370,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
                     drawerLayout.closeDrawer(GravityCompat.END);
                 } else {
                     setEnabled(false);
-                    onBackPressed();
+                    MainActivity.super.onBackPressed();
                 }
             }
         });
