@@ -24,7 +24,7 @@
     <color name="onSurfaceVariant">@color/bogart_cream</color>
 
     <color name="error">@color/bogart_burgundy</color>
-    <color name="onError">@color/bogart_cream</color>
+    <color name="onError">@color/white</color>
 
     <!-- App Specific -->
     <color name="black">#000000</color>

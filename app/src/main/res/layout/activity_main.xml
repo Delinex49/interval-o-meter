@@ -52,22 +52,22 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="12dp">
+                android:padding="16dp">
 
                 <TextView
                     android:id="@+id/tvStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/msg_idle"
-                    android:textColor="@color/bogart_cream"
+                    android:textColor="@color/white"
                     android:textStyle="bold"
-                    android:textSize="15sp" />
+                    android:textSize="20sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="4dp">
+                    android:layout_marginTop="6dp">
                     <TextView
                         android:id="@+id/tvTotalDuration"
                         android:layout_width="0dp"
@@ -75,7 +75,7 @@
                         android:layout_weight="1"
                         android:text="@string/label_time_infinite"
                         android:textColor="@color/bogart_tan"
-                        android:textSize="12sp" />
+                        android:textSize="13sp" />
                     <TextView
                         android:id="@+id/tvVideoLength"
                         android:layout_width="0dp"
@@ -83,7 +83,7 @@
                         android:layout_weight="1"
                         android:text="@string/label_video_unknown"
                         android:textColor="@color/bogart_tan"
-                        android:textSize="12sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <TextView
@@ -92,14 +92,14 @@
                     android:layout_height="wrap_content"
                     android:text="@string/label_est_never"
                     android:textColor="@color/bogart_cream"
-                    android:textSize="13sp"
-                    android:layout_marginTop="4dp" />
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginTop="6dp" />
 
-                <!-- Reserved space for warning -->
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="18dp"
-                    android:layout_marginTop="4dp">
+                    android:layout_marginTop="6dp">
                     <TextView
                         android:id="@+id/tvBusyWarning"
                         android:layout_width="match_parent"
@@ -113,9 +113,8 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Parameters Grid (Responsive) -->
+        <!-- Parameters Area -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/parametersGrid"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_margin="8dp"
@@ -124,7 +123,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- Interval -->
+            <!-- Row 1: Interval & Delay -->
             <LinearLayout
                 android:id="@+id/boxInterval"
                 android:layout_width="0dp"
@@ -140,15 +139,14 @@
                     android:layout_height="wrap_content"
                     android:text="@string/label_interval"
                     android:textColor="@color/bogart_tan"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
                 <NumberPicker
                     android:id="@+id/npInterval"
                     android:layout_width="wrap_content"
-                    android:layout_height="80dp"
+                    android:layout_height="110dp"
                     android:theme="@style/Theme.Intervalometer.Picker" />
             </LinearLayout>
 
-            <!-- Delay -->
             <LinearLayout
                 android:id="@+id/boxDelay"
                 android:layout_width="0dp"
@@ -164,15 +162,15 @@
                     android:layout_height="wrap_content"
                     android:text="@string/label_delay"
                     android:textColor="@color/bogart_tan"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
                 <NumberPicker
                     android:id="@+id/npStartDelay"
                     android:layout_width="wrap_content"
-                    android:layout_height="80dp"
+                    android:layout_height="110dp"
                     android:theme="@style/Theme.Intervalometer.Picker" />
             </LinearLayout>
 
-            <!-- Photos -->
+            <!-- Row 2: Photos & FPS -->
             <LinearLayout
                 android:id="@+id/boxPhotos"
                 android:layout_width="0dp"
@@ -183,21 +181,20 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/boxFps"
                 app:layout_constraintWidth_percent="0.5"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="12dp">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_photos"
                     android:textColor="@color/bogart_tan"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
                 <NumberPicker
                     android:id="@+id/npPhotoCount"
                     android:layout_width="wrap_content"
-                    android:layout_height="80dp"
+                    android:layout_height="110dp"
                     android:theme="@style/Theme.Intervalometer.Picker" />
             </LinearLayout>
 
-            <!-- FPS -->
             <LinearLayout
                 android:id="@+id/boxFps"
                 android:layout_width="0dp"
@@ -208,21 +205,21 @@
                 app:layout_constraintStart_toEndOf="@id/boxPhotos"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintWidth_percent="0.5"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="12dp">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_fps"
                     android:textColor="@color/bogart_tan"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
                 <NumberPicker
                     android:id="@+id/npFps"
                     android:layout_width="wrap_content"
-                    android:layout_height="80dp"
+                    android:layout_height="110dp"
                     android:theme="@style/Theme.Intervalometer.Picker" />
             </LinearLayout>
 
-            <!-- Shutter -->
+            <!-- Row 3: Shutter Hold (Horizontal Attempt) -->
             <LinearLayout
                 android:id="@+id/boxShutter"
                 android:layout_width="0dp"
@@ -232,23 +229,23 @@
                 app:layout_constraintTop_toBottomOf="@id/boxPhotos"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="12dp">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_shutter"
                     android:textColor="@color/bogart_tan"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
                 <NumberPicker
                     android:id="@+id/npShutterDuration"
                     android:layout_width="wrap_content"
-                    android:layout_height="80dp"
+                    android:layout_height="110dp"
                     android:orientation="horizontal"
                     android:theme="@style/Theme.Intervalometer.Picker" />
             </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Bottom Action Row -->
+        <!-- Bottom Buttons -->
         <LinearLayout
             android:id="@+id/buttonRow"
             android:layout_width="match_parent"
@@ -266,6 +263,7 @@
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/success_green"
+                android:textColor="@color/white"
                 android:layout_marginEnd="8dp"
                 app:cornerRadius="12dp"
                 android:enabled="false" />
@@ -276,6 +274,7 @@
                 android:layout_height="64dp"
                 android:layout_weight="1"
                 android:text="@string/btn_photo"
+                android:textColor="@color/white"
                 app:backgroundTint="@color/bogart_grey"
                 app:cornerRadius="12dp"
                 android:enabled="false" />
@@ -293,7 +292,10 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="24dp">
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:paddingBottom="24dp"
+            android:paddingTop="48dp">
 
             <TextView
                 android:id="@+id/drawerHeader"
@@ -302,7 +304,7 @@
                 android:text="@string/app_name"
                 android:textColor="@color/bogart_cream"
                 android:textStyle="bold"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:layout_marginBottom="8dp" />
 
             <TextView
@@ -312,6 +314,7 @@
                 android:layout_below="@id/drawerHeader"
                 android:text="CONTROLS"
                 android:textColor="@color/bogart_tan"
+                android:textStyle="bold"
                 android:textSize="12sp"
                 android:layout_marginBottom="32dp" />
 
@@ -327,7 +330,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/msg_idle"
                     android:textColor="@color/white"
-                    android:textSize="15sp"
+                    android:textSize="16sp"
                     android:layout_marginBottom="16dp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -335,6 +338,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/btn_connect"
+                    android:textColor="@color/white"
                     app:backgroundTint="@color/bogart_tan"
                     android:layout_marginBottom="24dp" />
 
@@ -355,9 +359,9 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
                 android:text="@string/btn_exit"
-                android:textColor="@color/bogart_cream"
+                android:textColor="@color/white"
                 app:icon="@drawable/ic_power"
-                app:iconTint="@color/bogart_cream" />
+                app:iconTint="@color/white" />
 
         </RelativeLayout>
     </com.google.android.material.navigation.NavigationView>
@@ -372,7 +376,8 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:paddingTop="48dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -384,7 +389,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/guide_title"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/bogart_cream"
                     android:textStyle="bold"
                     android:textSize="20sp"
                     android:layout_marginBottom="24dp" />
@@ -435,7 +440,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/about_title"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/bogart_cream"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:layout_marginBottom="8dp" />

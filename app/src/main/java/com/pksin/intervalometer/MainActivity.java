@@ -270,6 +270,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateIntervalometerButton(boolean isRunning) {
         btnShoot.setText(isRunning ? R.string.btn_stop : R.string.btn_start);
+        btnShoot.setTextColor(ContextCompat.getColor(this, R.color.white));
         btnShoot.setBackgroundTintList(ContextCompat.getColorStateList(this, 
                 isRunning ? R.color.bogart_burgundy : R.color.success_green));
     }
@@ -335,6 +336,7 @@ public class MainActivity extends AppCompatActivity {
             btnSingleShot.setEnabled(isConnected);
             
             btnConnectDrawer.setText(isConnected ? R.string.btn_disconnect : R.string.btn_connect);
+            btnConnectDrawer.setTextColor(ContextCompat.getColor(this, R.color.white));
             btnConnectDrawer.setBackgroundTintList(ContextCompat.getColorStateList(this, 
                     isConnected ? R.color.bogart_burgundy : R.color.bogart_tan));
         });
