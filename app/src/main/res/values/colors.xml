@@ -1,10 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Material 3 Dark Palette -->
+    <color name="primary">#D0BCFF</color>
+    <color name="onPrimary">#381E72</color>
+    <color name="primaryContainer">#4F378B</color>
+    <color name="onPrimaryContainer">#EADDFF</color>
+
+    <color name="secondary">#CCC2DC</color>
+    <color name="onSecondary">#332D41</color>
+
+    <color name="tertiary">#EFB8C8</color>
+    <color name="onTertiary">#492532</color>
+
+    <color name="background">#1C1B1F</color>
+    <color name="onBackground">#E6E1E5</color>
+    <color name="surface">#1C1B1F</color>
+    <color name="onSurface">#E6E1E5</color>
+    <color name="surfaceVariant">#49454F</color>
+    <color name="onSurfaceVariant">#CAC4D0</color>
+
+    <color name="error">#F2B8B5</color>
+    <color name="onError">#601410</color>
+
+    <!-- App Specific -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
     <color name="dark_grey">#FF121212</color>
     <color name="light_grey">#FFBDBDBD</color>
-    <color name="accent_blue">#FF1976D2</color>
-    <color name="accent_green">#FF2E7D32</color>
-    <color name="accent_red">#FFD32F2F</color>
+    <color name="canon_red">#FF0000</color>
+    <color name="success_green">#4CAF50</color>
+    <color name="warning_yellow">#FFC107</color>
 </resources>

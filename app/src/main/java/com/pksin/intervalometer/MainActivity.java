@@ -13,19 +13,25 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.Settings;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CheckBox;
+import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -36,10 +42,12 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 100;
 
-    private TextView tvStatus, tvTotalDuration, tvVideoLength, tvEndTime, tvBusyWarning;
-    private Button btnConnect, btnShoot, btnSingleShot, btnInstructions, btnExit;
-    private EditText etInterval, etStartDelay, etShutterDuration, etPhotoCount, etFps;
-    private CheckBox cbAutoReconnect;
+    private DrawerLayout drawerLayout;
+    private TextView tvStatus, tvDrawerStatus, tvTotalDuration, tvVideoLength, tvEndTime, tvBusyWarning;
+    private MaterialButton btnConnectDrawer, btnShoot, btnSingleShot, btnExit;
+    private ImageButton btnInstructions;
+    private NumberPicker npInterval, npStartDelay, npShutterDuration, npPhotoCount, npFps;
+    private MaterialSwitch swAutoReconnect;
 
     private IntervalService intervalService;
     private boolean isBound = false;
@@ -81,7 +89,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initViews();
+        setupPickers();
         setupListeners();
+        setupBackHandler();
 
         if (hasPermissions()) {
             startAndBindService();
@@ -92,25 +102,77 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        drawerLayout = findViewById(R.id.drawerLayout);
         tvStatus = findViewById(R.id.tvStatus);
+        tvDrawerStatus = findViewById(R.id.tvDrawerStatus);
         tvTotalDuration = findViewById(R.id.tvTotalDuration);
         tvVideoLength = findViewById(R.id.tvVideoLength);
         tvEndTime = findViewById(R.id.tvEndTime);
         tvBusyWarning = findViewById(R.id.tvBusyWarning);
         
-        btnConnect = findViewById(R.id.btnConnect);
+        btnConnectDrawer = findViewById(R.id.btnConnectDrawer);
         btnShoot = findViewById(R.id.btnShoot);
         btnSingleShot = findViewById(R.id.btnSingleShot);
-        btnInstructions = findViewById(R.id.btnInstructions);
         btnExit = findViewById(R.id.btnExit);
+        btnInstructions = findViewById(R.id.btnInstructions);
         
-        etInterval = findViewById(R.id.etInterval);
-        etStartDelay = findViewById(R.id.etStartDelay);
-        etShutterDuration = findViewById(R.id.etShutterDuration);
-        etPhotoCount = findViewById(R.id.etPhotoCount);
-        etFps = findViewById(R.id.etFps);
+        npInterval = findViewById(R.id.npInterval);
+        npStartDelay = findViewById(R.id.npStartDelay);
+        npShutterDuration = findViewById(R.id.npShutterDuration);
+        npPhotoCount = findViewById(R.id.npPhotoCount);
+        npFps = findViewById(R.id.npFps);
         
-        cbAutoReconnect = findViewById(R.id.cbAutoReconnect);
+        swAutoReconnect = findViewById(R.id.swAutoReconnect);
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setNavigationOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+        btnInstructions.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
+    }
+
+    private void setupPickers() {
+        npInterval.setMinValue(1);
+        npInterval.setMaxValue(3600);
+        npInterval.setValue(5);
+        
+        npStartDelay.setMinValue(0);
+        npStartDelay.setMaxValue(300);
+        npStartDelay.setValue(5);
+        
+        npShutterDuration.setMinValue(100);
+        npShutterDuration.setMaxValue(5000);
+        npShutterDuration.setValue(200);
+        
+        npPhotoCount.setMinValue(0);
+        npPhotoCount.setMaxValue(9999);
+        npPhotoCount.setValue(100);
+        
+        npFps.setMinValue(1);
+        npFps.setMaxValue(120);
+        npFps.setValue(30);
+
+        NumberPicker.OnValueChangeListener calcListener = (picker, oldVal, newVal) -> calculateResults();
+        npInterval.setOnValueChangedListener(calcListener);
+        npStartDelay.setOnValueChangedListener(calcListener);
+        npPhotoCount.setOnValueChangedListener(calcListener);
+        npFps.setOnValueChangedListener(calcListener);
+
+        enableDirectInput(npInterval);
+        enableDirectInput(npStartDelay);
+        enableDirectInput(npShutterDuration);
+        enableDirectInput(npPhotoCount);
+        enableDirectInput(npFps);
+    }
+
+    private void enableDirectInput(NumberPicker picker) {
+        picker.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+        int count = picker.getChildCount();
+        for (int i = 0; i < count; i++) {
+            View child = picker.getChildAt(i);
+            if (child instanceof EditText) {
+                child.setFocusable(true);
+                child.setFocusableInTouchMode(true);
+            }
+        }
     }
 
     private void startAndBindService() {
@@ -129,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
             if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
                 new AlertDialog.Builder(this)
                         .setTitle("Battery Optimization")
-                        .setMessage("To keep the intervalometer stable when the screen is off, please set battery usage to 'Unrestricted' in the next screen.")
+                        .setMessage("To keep the intervalometer stable when the screen is off, please set battery usage to 'Unrestricted'.")
                         .setPositiveButton("Configure", (dialog, which) -> {
                             Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
                             intent.setData(Uri.parse("package:" + getPackageName()));
@@ -142,9 +204,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        btnConnect.setOnClickListener(v -> {
+        btnConnectDrawer.setOnClickListener(v -> {
             if (!isBound) return;
-            if (btnConnect.getText().toString().contains("DISCONNECT")) {
+            if (btnConnectDrawer.getText().toString().contains("DISCONNECT")) {
                 intervalService.disconnect();
             } else {
                 if (hasPermissions()) {
@@ -155,90 +217,49 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnConnect.setOnLongClickListener(v -> {
-            if (isBound && !btnConnect.getText().toString().contains("DISCONNECT")) {
-                new BleManager(this, null).forgetCamera();
-                Toast.makeText(this, "Camera forgotten.", Toast.LENGTH_SHORT).show();
-            }
-            return true;
-        });
-
         btnShoot.setOnClickListener(v -> toggleIntervalometer());
 
         btnSingleShot.setOnClickListener(v -> {
-            if (!isBound) return;
-            try {
-                long duration = Long.parseLong(etShutterDuration.getText().toString());
-                intervalService.triggerSingleShot(duration);
-            } catch (Exception e) {
-                intervalService.triggerSingleShot(200);
-            }
+            if (isBound) intervalService.triggerSingleShot(npShutterDuration.getValue());
         });
-
-        btnInstructions.setOnClickListener(v -> showInstructions());
         
         btnExit.setOnClickListener(v -> {
-            if (isBound) {
-                intervalService.stopServiceCompletely();
-            }
+            if (isBound) intervalService.stopServiceCompletely();
             finishAndRemoveTask();
         });
-
-        TextWatcher watcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override
-            public void afterTextChanged(Editable s) {
-                calculateResults();
-            }
-        };
-
-        etInterval.addTextChangedListener(watcher);
-        etStartDelay.addTextChangedListener(watcher);
-        etPhotoCount.addTextChangedListener(watcher);
-        etFps.addTextChangedListener(watcher);
         
         calculateResults();
     }
 
     private void calculateResults() {
-        try {
-            String intervalStr = etInterval.getText().toString();
-            double interval = intervalStr.isEmpty() ? 0 : Double.parseDouble(intervalStr);
-            
-            tvBusyWarning.setVisibility(interval > 0 && interval < 2.0 ? View.VISIBLE : View.GONE);
-            
-            int delay = Integer.parseInt(etStartDelay.getText().toString());
-            int count = Integer.parseInt(etPhotoCount.getText().toString());
-            int fps = Integer.parseInt(etFps.getText().toString());
+        int interval = npInterval.getValue();
+        int delay = npStartDelay.getValue();
+        int count = npPhotoCount.getValue();
+        int fps = npFps.getValue();
 
-            if (count == 0) {
-                tvTotalDuration.setText("Time: Infinite");
-                tvVideoLength.setText("Video: Unknown");
-                tvEndTime.setText("Est. End: Never");
-                return;
-            }
+        tvBusyWarning.setVisibility(interval < 2 ? View.VISIBLE : View.GONE);
 
-            long totalSec = (long) (delay + (count - 1) * interval);
-            long hours = totalSec / 3600;
-            long mins = (totalSec % 3600) / 60;
-            long secs = totalSec % 60;
-            
-            tvTotalDuration.setText(String.format(Locale.US, "Time: %02d:%02d:%02d", hours, mins, secs));
-
-            double videoSec = (double) count / fps;
-            tvVideoLength.setText(String.format(Locale.US, "Video: %.1fs", videoSec));
-
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.SECOND, (int) totalSec);
-            tvEndTime.setText(String.format(Locale.US, "Est. End: %02d:%02d", 
-                    cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)));
-
-        } catch (NumberFormatException e) {
-            // Ignore
+        if (count == 0) {
+            tvTotalDuration.setText("Shooting Time: Infinite");
+            tvVideoLength.setText("Video Length: Unknown");
+            tvEndTime.setText("Estimated End: Never");
+            return;
         }
+
+        long totalSec = delay + (long) (count - 1) * interval;
+        long hours = totalSec / 3600;
+        long mins = (totalSec % 3600) / 60;
+        long secs = totalSec % 60;
+        
+        tvTotalDuration.setText(String.format(Locale.US, "Shooting Time: %02d:%02d:%02d", hours, mins, secs));
+
+        double videoSec = (double) count / fps;
+        tvVideoLength.setText(String.format(Locale.US, "Video Length: %.1fs", videoSec));
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.SECOND, (int) totalSec);
+        tvEndTime.setText(String.format(Locale.US, "Estimated End: %02d:%02d", 
+                cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)));
     }
 
     private void toggleIntervalometer() {
@@ -248,18 +269,14 @@ public class MainActivity extends AppCompatActivity {
             intervalService.stopIntervalometer();
             updateIntervalometerButton(false);
         } else {
-            try {
-                int interval = (int) Double.parseDouble(etInterval.getText().toString());
-                int count = Integer.parseInt(etPhotoCount.getText().toString());
-                int shutter = Integer.parseInt(etShutterDuration.getText().toString());
-                int delay = Integer.parseInt(etStartDelay.getText().toString());
-                boolean reconnect = cbAutoReconnect.isChecked();
-
-                intervalService.startIntervalometer(interval, count, shutter, delay, reconnect);
-                updateIntervalometerButton(true);
-            } catch (Exception e) {
-                Toast.makeText(this, "Invalid settings", Toast.LENGTH_SHORT).show();
-            }
+            intervalService.startIntervalometer(
+                    npInterval.getValue(),
+                    npPhotoCount.getValue(),
+                    npShutterDuration.getValue(),
+                    npStartDelay.getValue(),
+                    swAutoReconnect.isChecked()
+            );
+            updateIntervalometerButton(true);
         }
     }
 
@@ -267,29 +284,6 @@ public class MainActivity extends AppCompatActivity {
         btnShoot.setText(isRunning ? "STOP" : "START");
         btnShoot.setBackgroundTintList(ContextCompat.getColorStateList(this, 
                 isRunning ? android.R.color.holo_red_dark : android.R.color.holo_green_dark));
-    }
-
-    private void showInstructions() {
-        new AlertDialog.Builder(this)
-                .setTitle("PRE-FLIGHT CHECK")
-                .setMessage("SETUP STEPS:\n" +
-                           "1. Camera Menu: Go to Wireless Settings and PAIR with this phone.\n" +
-                           "2. Camera Drive Mode: MUST be set to 'Remote Control' or 'Self-timer: 2s/remote'.\n" +
-                           "3. Lens: Switch to Manual Focus (MF) for 100% reliable shooting.\n\n" +
-                           "TIPS:\n" +
-                           "• Shutter Duration: Increase to 500ms+ if you must use Autofocus.\n" +
-                           "• Auto-Reconnect: Keeps the session alive if you restart the camera.")
-                .setPositiveButton("Got it!", null)
-                .show();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (isBound) {
-            unbindService(connection);
-            isBound = false;
-        }
     }
 
     private boolean hasPermissions() {
@@ -327,18 +321,18 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            boolean allGrantedResult = true;
+            boolean allGranted = true;
             for (int result : grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
-                    allGrantedResult = false;
+                    allGranted = false;
                     break;
                 }
             }
-            if (allGrantedResult) {
+            if (allGranted) {
                 startAndBindService();
                 checkBatteryOptimization();
             } else {
-                Toast.makeText(this, "Permissions required for intervalometer", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Permissions required", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -346,9 +340,39 @@ public class MainActivity extends AppCompatActivity {
     public void updateUiState(String statusText, boolean isConnected) {
         runOnUiThread(() -> {
             tvStatus.setText("Status: " + statusText);
+            tvDrawerStatus.setText("Status: " + statusText);
+            
             btnShoot.setEnabled(isConnected || (isBound && intervalService.isIntervalometerRunning()));
             btnSingleShot.setEnabled(isConnected);
-            btnConnect.setText(isConnected ? "DISCONNECT" : "CONNECT / WAKE");
+            
+            btnConnectDrawer.setText(isConnected ? "DISCONNECT" : "CONNECT / WAKE");
+            btnConnectDrawer.setBackgroundTintList(ContextCompat.getColorStateList(this, 
+                    isConnected ? android.R.color.holo_red_dark : R.color.primary));
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isBound) {
+            unbindService(connection);
+            isBound = false;
+        }
+    }
+
+    private void setupBackHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                    drawerLayout.closeDrawer(GravityCompat.END);
+                } else {
+                    setEnabled(false);
+                    onBackPressed();
+                }
+            }
         });
     }
 }

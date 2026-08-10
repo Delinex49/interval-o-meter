@@ -1,283 +1,400 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black"
-    android:orientation="vertical"
-    android:paddingLeft="20dp"
-    android:paddingRight="20dp"
-    android:paddingTop="48dp"
-    android:paddingBottom="20dp">
+    tools:openDrawer="start">
 
-    <!-- Status and Info Bar -->
-    <RelativeLayout
+    <!-- Main Content -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:text="Status: Idle"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/black"
+            app:navigationIcon="@drawable/ic_menu">
 
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:text="INTERVALOMETER"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:textSize="18sp" />
+
+                <ImageButton
+                    android:id="@+id/btnInstructions"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_info"
+                    android:contentDescription="Guide"
+                    android:layout_marginEnd="8dp" />
+            </RelativeLayout>
+        </com.google.android.material.appbar.MaterialToolbar>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Session Info Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="@color/surfaceVariant"
+                    app:cardCornerRadius="12dp"
+                    android:layout_marginBottom="24dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/tvStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Status: Idle"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            android:textSize="14sp"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:id="@+id/tvTotalDuration"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Shooting Time: 00:00:00"
+                            android:textColor="@color/onSurfaceVariant"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tvVideoLength"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Video Length: 0s"
+                            android:textColor="@color/onSurfaceVariant"
+                            android:textSize="14sp"
+                            android:layout_marginTop="4dp" />
+
+                        <TextView
+                            android:id="@+id/tvEndTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Estimated End: --:--"
+                            android:textColor="@color/primary"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
+                            android:layout_marginTop="8dp" />
+
+                        <TextView
+                            android:id="@+id/tvBusyWarning"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Warning: Intervals &lt; 2s may cause camera 'Busy' errors"
+                            android:textColor="@color/error"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            android:layout_marginTop="8dp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Parameters Grid (Wheels) -->
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:rowCount="3"
+                    android:useDefaultMargins="true"
+                    android:alignmentMode="alignBounds">
+
+                    <!-- Interval -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Interval (s)"
+                            android:textColor="@color/light_grey"
+                            android:textSize="12sp" />
+                        <NumberPicker
+                            android:id="@+id/npInterval"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:theme="@style/Theme.Intervalometer.Picker" />
+                    </LinearLayout>
+
+                    <!-- Start Delay -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Start Delay (s)"
+                            android:textColor="@color/light_grey"
+                            android:textSize="12sp" />
+                        <NumberPicker
+                            android:id="@+id/npStartDelay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:theme="@style/Theme.Intervalometer.Picker" />
+                    </LinearLayout>
+
+                    <!-- Photo Count -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_marginTop="16dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Photos (0=∞)"
+                            android:textColor="@color/light_grey"
+                            android:textSize="12sp" />
+                        <NumberPicker
+                            android:id="@+id/npPhotoCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:theme="@style/Theme.Intervalometer.Picker" />
+                    </LinearLayout>
+
+                    <!-- FPS -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_marginTop="16dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Video FPS"
+                            android:textColor="@color/light_grey"
+                            android:textSize="12sp" />
+                        <NumberPicker
+                            android:id="@+id/npFps"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:theme="@style/Theme.Intervalometer.Picker" />
+                    </LinearLayout>
+
+                    <!-- Shutter Duration -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_columnSpan="2"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_marginTop="16dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Shutter Hold (ms)"
+                            android:textColor="@color/light_grey"
+                            android:textSize="12sp" />
+                        <NumberPicker
+                            android:id="@+id/npShutterDuration"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:theme="@style/Theme.Intervalometer.Picker" />
+                    </LinearLayout>
+                </GridLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- Bottom Actions -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:padding="16dp">
 
-            <Button
-                android:id="@+id/btnInstructions"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShoot"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_weight="2"
+                android:text="START"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/success_green"
+                android:layout_marginEnd="8dp"
+                app:cornerRadius="12dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSingleShot"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_weight="1"
+                android:text="PHOTO"
+                app:backgroundTint="@color/surfaceVariant"
+                app:cornerRadius="12dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Left Drawer (Controls) -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navLeft"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/background">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="24dp">
+
+            <TextView
+                android:id="@+id/drawerTitle"
                 android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:backgroundTint="@color/dark_grey"
-                android:text="INFO"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                android:layout_marginEnd="4dp" />
+                android:layout_height="wrap_content"
+                android:text="CONTROLS"
+                android:textColor="@color/primary"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:layout_marginBottom="32dp" />
 
-            <Button
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/drawerTitle"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvDrawerStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Status: Idle"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnConnectDrawer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="CONNECT / WAKE"
+                    app:backgroundTint="@color/primary"
+                    android:layout_marginBottom="24dp" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swAutoReconnect"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Auto-Reconnect"
+                    android:textColor="@color/white"
+                    android:checked="true"
+                    android:layout_marginBottom="16dp" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnExit"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:backgroundTint="@color/accent_red"
-                android:text="EXIT"
-                android:textColor="@color/white"
-                android:textSize="11sp" />
-        </LinearLayout>
-    </RelativeLayout>
-
-    <Button
-        android:id="@+id/btnConnect"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:text="CONNECT / WAKE"
-        android:backgroundTint="@color/accent_blue"
-        android:textColor="@color/white"
-        android:layout_marginBottom="20dp" />
-
-    <!-- Interval Settings Row -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="4dp">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_marginEnd="8dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Interval (s)"
-                android:textColor="@color/light_grey"
-                android:textSize="11sp" />
-            <EditText
-                android:id="@+id/etInterval"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
-                android:text="5"
-                android:textColor="@color/white"
-                android:backgroundTint="@color/light_grey" />
-        </LinearLayout>
+                android:layout_alignParentBottom="true"
+                android:text="EXIT APP"
+                android:textColor="@color/canon_red"
+                app:icon="@drawable/ic_power"
+                app:iconTint="@color/canon_red" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Start Delay (s)"
-                android:textColor="@color/light_grey"
-                android:textSize="11sp" />
-            <EditText
-                android:id="@+id/etStartDelay"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="number"
-                android:text="5"
-                android:textColor="@color/white"
-                android:backgroundTint="@color/light_grey" />
-        </LinearLayout>
-    </LinearLayout>
+        </RelativeLayout>
+    </com.google.android.material.navigation.NavigationView>
 
-    <TextView
-        android:id="@+id/tvBusyWarning"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Warning: Intervals &lt; 2s may cause camera 'Busy' errors"
-        android:textColor="@color/accent_red"
-        android:textSize="10sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        android:layout_marginBottom="12dp" />
+    <!-- Right Drawer (Guide) -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navRight"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@color/background">
 
-    <!-- Shutter Press row -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginBottom="12dp">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Shutter Press Duration (ms)"
-            android:textColor="@color/light_grey"
-            android:textSize="11sp" />
-        <EditText
-            android:id="@+id/etShutterDuration"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:text="200"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/light_grey" />
-    </LinearLayout>
+            android:layout_height="match_parent">
 
-    <!-- Session Settings Row -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="12dp">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_marginEnd="8dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Shots (0 = ∞)"
-                android:textColor="@color/light_grey"
-                android:textSize="11sp" />
-            <EditText
-                android:id="@+id/etPhotoCount"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number"
-                android:text="100"
-                android:textColor="@color/white"
-                android:backgroundTint="@color/light_grey" />
-        </LinearLayout>
+                android:orientation="vertical"
+                android:padding="24dp">
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Video FPS"
-                android:textColor="@color/light_grey"
-                android:textSize="11sp" />
-            <EditText
-                android:id="@+id/etFps"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="number"
-                android:text="30"
-                android:textColor="@color/white"
-                android:backgroundTint="@color/light_grey" />
-        </LinearLayout>
-    </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SETUP GUIDE"
+                    android:textColor="@color/primary"
+                    android:textStyle="bold"
+                    android:textSize="20sp"
+                    android:layout_marginBottom="24dp" />
 
-    <CheckBox
-        android:id="@+id/cbAutoReconnect"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Auto-Reconnect"
-        android:textColor="@color/white"
-        android:buttonTint="@color/accent_blue"
-        android:checked="true"
-        android:layout_marginBottom="16dp"
-        android:textSize="13sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="1. Pair Camera\nGo to Camera Wireless Settings > Bluetooth > Pair with Phone.\n\n2. Set Drive Mode\nOn Camera: Set Drive Mode to 'Remote Control' or 'Self-timer/Remote'.\n\n3. Manual Focus\nHighly recommended: Set lens to MF to avoid focus lock delays.\n\n4. App Settings\nUse the wheels on the main screen to set your interval and shot count."
+                    android:textColor="@color/onBackground"
+                    android:lineSpacingExtra="4dp"
+                    android:textSize="14sp" />
 
-    <!-- Info Box (Compressed) -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/dark_grey"
-        android:orientation="vertical"
-        android:padding="10dp"
-        android:layout_marginBottom="16dp">
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/surfaceVariant"
+                    android:layout_marginTop="32dp"
+                    android:layout_marginBottom="32dp" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:id="@+id/tvTotalDuration"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Time: 00:08:20"
-                android:textColor="@color/white"
-                android:textSize="13sp" />
-            <TextView
-                android:id="@+id/tvVideoLength"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Video: 3.3s"
-                android:textColor="@color/white"
-                android:textSize="13sp" />
-        </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ABOUT"
+                    android:textColor="@color/primary"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp" />
 
-        <TextView
-            android:id="@+id/tvEndTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Est. End: --:--"
-            android:textColor="@color/accent_blue"
-            android:textStyle="bold"
-            android:layout_marginTop="4dp"
-            android:textSize="13sp" />
-    </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Canon Intervalometer v1.0.0\nProfessional tool for Canon M/R series."
+                    android:textColor="@color/onBackground"
+                    android:textSize="12sp" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:orientation="horizontal">
+            </LinearLayout>
+        </ScrollView>
+    </com.google.android.material.navigation.NavigationView>
 
-        <Button
-            android:id="@+id/btnShoot"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="2"
-            android:text="START"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:backgroundTint="@color/accent_green"
-            android:textColor="@color/white"
-            android:layout_marginEnd="8dp"
-            android:enabled="false" />
-
-        <Button
-            android:id="@+id/btnSingleShot"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="PHOTO"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:backgroundTint="@color/dark_grey"
-            android:textColor="@color/white"
-            android:enabled="false" />
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>
