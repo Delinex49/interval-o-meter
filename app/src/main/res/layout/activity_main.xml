@@ -56,12 +56,14 @@
 
                 <TextView
                     android:id="@+id/tvStatus"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/msg_idle"
                     android:textColor="@color/white"
                     android:textStyle="bold"
-                    android:textSize="20sp" />
+                    android:textSize="20sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -84,31 +86,28 @@
                         android:text="@string/label_video_unknown"
                         android:textColor="@color/bogart_tan"
                         android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/tvEndTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_est_never"
+                        android:textColor="@color/bogart_tan"
+                        android:textSize="13sp" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvEndTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_est_never"
-                    android:textColor="@color/bogart_cream"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:layout_marginTop="6dp" />
-
+                <!-- Reserved space for secondary status -->
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="18dp"
+                    android:layout_height="22dp"
                     android:layout_marginTop="6dp">
                     <TextView
-                        android:id="@+id/tvBusyWarning"
+                        android:id="@+id/tvSecondaryStatus"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/msg_busy_warning"
-                        android:textColor="@color/bogart_burgundy"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:visibility="invisible" />
+                        android:text="@string/label_ready"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:visibility="visible" />
                 </FrameLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -123,7 +122,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- Row 1: Interval & Delay -->
             <LinearLayout
                 android:id="@+id/boxInterval"
                 android:layout_width="0dp"
@@ -170,7 +168,6 @@
                     android:theme="@style/Theme.Intervalometer.Picker" />
             </LinearLayout>
 
-            <!-- Row 2: Photos & FPS -->
             <LinearLayout
                 android:id="@+id/boxPhotos"
                 android:layout_width="0dp"
@@ -219,7 +216,6 @@
                     android:theme="@style/Theme.Intervalometer.Picker" />
             </LinearLayout>
 
-            <!-- Row 3: Shutter Hold (Horizontal Attempt) -->
             <LinearLayout
                 android:id="@+id/boxShutter"
                 android:layout_width="0dp"
@@ -262,7 +258,7 @@
                 android:text="@string/btn_start"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                app:backgroundTint="@color/success_green"
+                app:backgroundTint="@color/muted_green"
                 android:textColor="@color/white"
                 android:layout_marginEnd="8dp"
                 app:cornerRadius="12dp"
@@ -289,81 +285,101 @@
         android:layout_gravity="start"
         android:background="@color/background">
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:orientation="vertical"
             android:paddingLeft="24dp"
             android:paddingRight="24dp"
             android:paddingBottom="24dp"
-            android:paddingTop="48dp">
+            android:paddingTop="64dp">
 
             <TextView
                 android:id="@+id/drawerHeader"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/app_name"
+                android:textAllCaps="true"
                 android:textColor="@color/bogart_cream"
                 android:textStyle="bold"
-                android:textSize="20sp"
-                android:layout_marginBottom="8dp" />
+                android:textSize="20sp" />
 
             <TextView
                 android:id="@+id/drawerSub"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/drawerHeader"
-                android:text="CONTROLS"
+                android:text="@string/label_controls"
                 android:textColor="@color/bogart_tan"
                 android:textStyle="bold"
-                android:textSize="12sp"
+                android:textSize="16sp"
+                android:layout_marginTop="4dp"
                 android:layout_marginBottom="32dp" />
 
-            <LinearLayout
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConnectDrawer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/drawerSub"
-                android:orientation="vertical">
+                android:text="@string/btn_connect"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/bogart_tan"
+                android:layout_marginBottom="16dp" />
 
-                <TextView
-                    android:id="@+id/tvDrawerStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/msg_idle"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="16dp" />
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swAutoReconnect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Auto-Reconnect"
+                android:textColor="@color/white"
+                android:checked="true"
+                app:thumbTint="@color/white"
+                app:trackTint="@color/bogart_tan"
+                android:layout_marginBottom="24dp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnConnectDrawer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/btn_connect"
-                    android:textColor="@color/white"
-                    app:backgroundTint="@color/bogart_tan"
-                    android:layout_marginBottom="24dp" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/bogart_grey"
+                android:layout_marginBottom="24dp" />
 
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/swAutoReconnect"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Auto-Reconnect"
-                    android:textColor="@color/white"
-                    android:checked="true"
-                    android:layout_marginBottom="16dp" />
-            </LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/label_theme"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:padding="8dp"
+                app:drawableStartCompat="@drawable/ic_info"
+                android:drawablePadding="12dp"
+                app:drawableTint="@color/bogart_tan" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/label_language"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:layout_marginTop="8dp"
+                app:drawableStartCompat="@drawable/ic_info"
+                android:drawablePadding="12dp"
+                app:drawableTint="@color/bogart_tan" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnExit"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
                 android:text="@string/btn_exit"
                 android:textColor="@color/white"
                 app:icon="@drawable/ic_power"
                 app:iconTint="@color/white" />
 
-        </RelativeLayout>
+        </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
 
     <!-- Right Drawer (Guide) -->
@@ -376,19 +392,22 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="48dp">
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:paddingBottom="24dp"
+                android:paddingTop="64dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/guide_title"
+                    android:textAllCaps="true"
                     android:textColor="@color/bogart_cream"
                     android:textStyle="bold"
                     android:textSize="20sp"
@@ -440,6 +459,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/about_title"
+                    android:textAllCaps="true"
                     android:textColor="@color/bogart_cream"
                     android:textStyle="bold"
                     android:textSize="16sp"

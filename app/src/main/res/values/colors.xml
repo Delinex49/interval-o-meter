@@ -31,4 +31,5 @@
     <color name="white">#FFFFFF</color>
     <color name="canon_red">@color/bogart_burgundy</color>
     <color name="success_green">#4CAF50</color>
+    <color name="muted_green">#4C5944</color>
 </resources>

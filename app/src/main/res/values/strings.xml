@@ -2,18 +2,22 @@
     <string name="app_name">Intervalometer</string>
 
     <!-- UI Labels -->
-    <string name="label_status">Status: %1$s</string>
+    <string name="label_status">%1$s</string>
     <string name="label_time">Time: %1$02d:%2$02d:%3$02d</string>
     <string name="label_time_infinite">Time: Infinite</string>
     <string name="label_video_length">Video: %1$.1fs</string>
     <string name="label_video_unknown">Video: Unknown</string>
-    <string name="label_est_end">Est. End: %1$02d:%2$02d</string>
-    <string name="label_est_never">Est. End: Never</string>
+    <string name="label_est_end">End: %1$02d:%2$02d</string>
+    <string name="label_est_never">End: Never</string>
     <string name="label_interval">Interval (s)</string>
     <string name="label_delay">Delay (s)</string>
     <string name="label_photos">Photos (0=∞)</string>
     <string name="label_fps">Video FPS</string>
     <string name="label_shutter">Shutter Hold (ms)</string>
+    <string name="label_controls">CONTROLS</string>
+    <string name="label_theme">Theme</string>
+    <string name="label_language">Language</string>
+    <string name="label_ready">Ready to shoot</string>
 
     <!-- Buttons -->
     <string name="btn_start">START</string>
@@ -29,16 +33,19 @@
     <string name="btn_ignore">Ignore</string>
 
     <!-- Messages & Warnings -->
-    <string name="msg_busy_warning">Intervals &lt; 2s may cause \'Busy\' errors</string>
+    <string name="msg_busy_warning">Warning: Intervals &lt; 2s may cause \'Busy\' errors</string>
     <string name="msg_starting_in">Starting in %1$ds...</string>
     <string name="msg_shot_progress">Shot %1$d / %2$d</string>
     <string name="msg_shot_infinite">Shot %1$d</string>
-    <string name="msg_session_complete">Session complete! %1$d photos taken.</string>
-    <string name="msg_reconnected_firing">Reconnected! Firing shot...</string>
-    <string name="msg_reconnected_resuming">Reconnected! Resuming...</string>
-    <string name="msg_connection_lost_searching">Connection lost. Searching...</string>
-    <string name="msg_connection_lost_stopped">Connection lost. Session stopped.</string>
+    <string name="msg_session_complete">Session complete!</string>
+    <string name="msg_reconnected_firing">Firing shot...</string>
+    <string name="msg_reconnected_resuming">Resuming...</string>
+    <string name="msg_connection_lost_searching">Searching...</string>
+    <string name="msg_connection_lost_stopped">Connection lost.</string>
     <string name="msg_idle">Idle</string>
+    <string name="msg_connected">Connected</string>
+    <string name="msg_searching">Searching</string>
+    <string name="msg_identifying">Identifying</string>
     <string name="msg_camera_forgotten">Camera forgotten.</string>
     <string name="msg_invalid_settings">Invalid settings</string>
     <string name="msg_permissions_required">Permissions required</string>
@@ -57,14 +64,14 @@
     <string name="battery_msg">To keep the intervalometer stable when the screen is off, please set battery usage to \'Unrestricted\'.</string>
 
     <!-- Errors -->
-    <string name="err_connection_lost">Connection lost (Camera too far?)</string>
-    <string name="err_disconnected">Camera disconnected.</string>
-    <string name="err_timeout">Connection timeout. Please restart camera.</string>
-    <string name="err_pairing">Pairing failed. Try re-pairing.</string>
-    <string name="err_busy">Phone Bluetooth is busy.</string>
-    <string name="err_generic">Link error (Code %1$d)</string>
-    <string name="err_not_found">Camera not found. Is it on?</string>
-    <string name="err_scan_failed">Scan failed (error %1$d)</string>
-    <string name="err_service_not_found">Canon service not found</string>
-    <string name="err_bonding_failed">Bonding failed. Reset camera BT settings.</string>
+    <string name="err_connection_lost">Connection lost</string>
+    <string name="err_disconnected">Disconnected</string>
+    <string name="err_timeout">Timeout</string>
+    <string name="err_pairing">Pairing failed</string>
+    <string name="err_busy">Bluetooth busy</string>
+    <string name="err_generic">Error %1$d</string>
+    <string name="err_not_found">Not found</string>
+    <string name="err_scan_failed">Scan failed</string>
+    <string name="err_service_not_found">Service not found</string>
+    <string name="err_bonding_failed">Bonding failed</string>
 </resources>

@@ -16,7 +16,6 @@ import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
 
     private DrawerLayout drawerLayout;
-    private TextView tvStatus, tvDrawerStatus, tvTotalDuration, tvVideoLength, tvEndTime, tvBusyWarning;
+    private TextView tvStatus, tvTotalDuration, tvVideoLength, tvEndTime, tvSecondaryStatus;
     private MaterialButton btnConnectDrawer, btnShoot, btnSingleShot;
     private NumberPicker npInterval, npStartDelay, npShutterDuration, npPhotoCount, npFps;
     private MaterialSwitch swAutoReconnect;
@@ -102,11 +101,10 @@ public class MainActivity extends AppCompatActivity {
     private void initViews() {
         drawerLayout = findViewById(R.id.drawerLayout);
         tvStatus = findViewById(R.id.tvStatus);
-        tvDrawerStatus = findViewById(R.id.tvDrawerStatus);
         tvTotalDuration = findViewById(R.id.tvTotalDuration);
         tvVideoLength = findViewById(R.id.tvVideoLength);
         tvEndTime = findViewById(R.id.tvEndTime);
-        tvBusyWarning = findViewById(R.id.tvBusyWarning);
+        tvSecondaryStatus = findViewById(R.id.tvSecondaryStatus);
         
         btnConnectDrawer = findViewById(R.id.btnConnectDrawer);
         btnShoot = findViewById(R.id.btnShoot);
@@ -226,7 +224,13 @@ public class MainActivity extends AppCompatActivity {
         int count = npPhotoCount.getValue();
         int fps = npFps.getValue();
 
-        tvBusyWarning.setVisibility(interval < 2 ? View.VISIBLE : View.INVISIBLE);
+        if (interval < 2) {
+            tvSecondaryStatus.setText(R.string.msg_busy_warning);
+            tvSecondaryStatus.setTextColor(ContextCompat.getColor(this, R.color.white));
+        } else {
+            tvSecondaryStatus.setText(R.string.label_ready);
+            tvSecondaryStatus.setTextColor(ContextCompat.getColor(this, R.color.white));
+        }
 
         if (count == 0) {
             tvTotalDuration.setText(R.string.label_time_infinite);
@@ -270,9 +274,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateIntervalometerButton(boolean isRunning) {
         btnShoot.setText(isRunning ? R.string.btn_stop : R.string.btn_start);
-        btnShoot.setTextColor(ContextCompat.getColor(this, R.color.white));
         btnShoot.setBackgroundTintList(ContextCompat.getColorStateList(this, 
-                isRunning ? R.color.bogart_burgundy : R.color.success_green));
+                isRunning ? R.color.bogart_burgundy : R.color.muted_green));
     }
 
     private boolean hasPermissions() {
@@ -286,7 +289,6 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             needed.add(Manifest.permission.POST_NOTIFICATIONS);
         }
-        
         for (String p : needed) {
             if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) return false;
         }
@@ -311,14 +313,14 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            boolean allGranted = true;
+            boolean allGrantedResult = true;
             for (int result : grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
-                    allGranted = false;
+                    allGrantedResult = false;
                     break;
                 }
             }
-            if (allGranted) {
+            if (allGrantedResult) {
                 startAndBindService();
                 checkBatteryOptimization();
             } else {
@@ -330,13 +332,11 @@ public class MainActivity extends AppCompatActivity {
     public void updateUiState(String statusText, boolean isConnected) {
         runOnUiThread(() -> {
             tvStatus.setText(getString(R.string.label_status, statusText));
-            tvDrawerStatus.setText(getString(R.string.label_status, statusText));
             
             btnShoot.setEnabled(isConnected || (isBound && intervalService.isIntervalometerRunning()));
             btnSingleShot.setEnabled(isConnected);
             
             btnConnectDrawer.setText(isConnected ? R.string.btn_disconnect : R.string.btn_connect);
-            btnConnectDrawer.setTextColor(ContextCompat.getColor(this, R.color.white));
             btnConnectDrawer.setBackgroundTintList(ContextCompat.getColorStateList(this, 
                     isConnected ? R.color.bogart_burgundy : R.color.bogart_tan));
         });

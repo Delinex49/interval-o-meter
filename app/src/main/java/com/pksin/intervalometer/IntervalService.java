@@ -14,8 +14,6 @@ import android.os.PowerManager;
 
 import androidx.core.app.NotificationCompat;
 
-import java.util.Locale;
-
 public class IntervalService extends Service implements BleManager.BleCallback {
 
     private static final String CHANNEL_ID = "IntervalometerChannel";
@@ -164,7 +162,7 @@ public class IntervalService extends Service implements BleManager.BleCallback {
         updateNotification(progress);
 
         if (photoCount > 0 && currentShot >= photoCount) {
-            stopSelfWithNotification(getString(R.string.msg_session_complete, currentShot));
+            stopSelfWithNotification(getString(R.string.msg_session_complete));
         } else {
             handler.postDelayed(this::takeNextShot, intervalSec * 1000L);
         }
@@ -172,9 +170,14 @@ public class IntervalService extends Service implements BleManager.BleCallback {
 
     @Override
     public void onStatusUpdate(String status, boolean isConnected) {
-        this.lastStatus = status;
+        String shortStatus = status;
+        if (status.contains("Ready to shoot")) shortStatus = getString(R.string.msg_connected);
+        if (status.contains("Waiting for camera")) shortStatus = getString(R.string.msg_searching);
+        if (status.contains("Identifying phone")) shortStatus = getString(R.string.msg_identifying);
+        
+        this.lastStatus = shortStatus;
         this.isConnected = isConnected;
-        if (uiCallback != null) uiCallback.onStatusUpdate(status, isConnected);
+        if (uiCallback != null) uiCallback.onStatusUpdate(shortStatus, isConnected);
         
         if (isConnected && pendingShot) {
             isWaitingForReconnect = false;
@@ -200,7 +203,7 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     private void stopSelfWithNotification(String message) {
         isIntervalometerRunning = false;
         isWaitingForReconnect = false;
-        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+        if (wakeLock.isHeld()) wakeLock.release();
         handler.removeCallbacksAndMessages(null);
         
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -261,7 +264,7 @@ public class IntervalService extends Service implements BleManager.BleCallback {
     @Override
     public void onDestroy() {
         isIntervalometerRunning = false;
-        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+        if (wakeLock.isHeld()) wakeLock.release();
         if (bleManager != null) bleManager.onDestroy();
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();
