@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
     private IntervalService intervalService;
     private boolean isBound = false;
+    private boolean lastConnectionFailed = false;
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -158,8 +159,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void enableDirectInput(NumberPicker picker) {
         picker.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
-        int count = picker.getChildCount();
-        for (int i = 0; i < count; i++) {
+        int totalChildrenCount = picker.getChildCount();
+        for (int i = 0; i < totalChildrenCount; i++) {
             View child = picker.getChildAt(i);
             if (child instanceof EditText) {
                 child.setFocusable(true);
@@ -197,7 +198,9 @@ public class MainActivity extends AppCompatActivity {
                 intervalService.disconnect();
             } else {
                 if (hasPermissions()) {
+                    btnConnectDrawer.setText(R.string.btn_connecting);
                     intervalService.connect();
+                    lastConnectionFailed = false;
                 } else {
                     requestBlePermissions();
                 }
@@ -226,10 +229,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (interval < 2) {
             tvSecondaryStatus.setText(R.string.msg_busy_warning);
-            tvSecondaryStatus.setTextColor(ContextCompat.getColor(this, R.color.white));
         } else {
             tvSecondaryStatus.setText(R.string.label_ready);
-            tvSecondaryStatus.setTextColor(ContextCompat.getColor(this, R.color.white));
         }
 
         if (count == 0) {
@@ -333,10 +334,28 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(() -> {
             tvStatus.setText(getString(R.string.label_status, statusText));
             
-            btnShoot.setEnabled(isConnected || (isBound && intervalService.isIntervalometerRunning()));
-            btnSingleShot.setEnabled(isConnected);
+            // Handle RETRY logic
+            if (!isConnected && (statusText.toLowerCase().contains("error") || statusText.toLowerCase().contains("not found"))) {
+                lastConnectionFailed = true;
+            }
+
+            boolean isRunning = isBound && intervalService.isIntervalometerRunning();
+            btnShoot.setEnabled(isConnected || isRunning);
             
-            btnConnectDrawer.setText(isConnected ? R.string.btn_disconnect : R.string.btn_connect);
+            // BLOCK Photo button while intervalometer is running
+            btnSingleShot.setEnabled(isConnected && !isRunning);
+            
+            updateIntervalometerButton(isRunning);
+
+            String connectBtnText = isConnected ? getString(R.string.btn_disconnect) : 
+                                   (lastConnectionFailed ? getString(R.string.btn_retry) : getString(R.string.btn_connect));
+            
+            // If currently connecting (and not yet connected), don't overwrite the "CONNECTING..." text yet
+            if (btnConnectDrawer.getText().toString().equals(getString(R.string.btn_connecting)) && !isConnected && !lastConnectionFailed) {
+                connectBtnText = getString(R.string.btn_connecting);
+            }
+
+            btnConnectDrawer.setText(connectBtnText);
             btnConnectDrawer.setBackgroundTintList(ContextCompat.getColorStateList(this, 
                     isConnected ? R.color.bogart_burgundy : R.color.bogart_tan));
         });

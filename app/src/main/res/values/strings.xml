@@ -24,6 +24,8 @@
     <string name="btn_stop">STOP</string>
     <string name="btn_photo">PHOTO</string>
     <string name="btn_connect">CONNECT</string>
+    <string name="btn_connecting">CONNECTING...</string>
+    <string name="btn_retry">RETRY</string>
     <string name="btn_disconnect">DISCONNECT</string>
     <string name="btn_info">INFO</string>
     <string name="btn_exit">EXIT APP</string>
