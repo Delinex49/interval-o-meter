@@ -77,7 +77,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/label_time_infinite"
-                        android:textColor="@color/bogart_tan"
+                        android:textColor="@color/bogart_cream"
                         android:textSize="13sp" />
                     <TextView
                         android:id="@+id/tvVideoLength"
@@ -85,14 +85,14 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/label_video_unknown"
-                        android:textColor="@color/bogart_tan"
+                        android:textColor="@color/bogart_cream"
                         android:textSize="13sp" />
                     <TextView
                         android:id="@+id/tvEndTime"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/label_est_never"
-                        android:textColor="@color/bogart_tan"
+                        android:textColor="@color/bogart_cream"
                         android:textSize="13sp" />
                 </LinearLayout>
 
@@ -119,7 +119,7 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_margin="8dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="48dp"
             app:layout_constraintTop_toBottomOf="@id/infoCard"
             app:layout_constraintBottom_toTopOf="@id/buttonRow"
             app:layout_constraintStart_toStartOf="parent"
@@ -334,14 +334,8 @@
                 android:text="Auto-Reconnect"
                 android:textColor="@color/white"
                 android:checked="true"
-                app:thumbTint="@color/white"
-                app:trackTint="@color/bogart_tan"
-                android:layout_marginBottom="24dp" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/bogart_grey"
+                app:thumbTint="@color/switch_thumb_selector"
+                app:trackTint="@color/switch_track_selector"
                 android:layout_marginBottom="24dp" />
 
             <View

@@ -54,12 +54,12 @@
 
     <!-- Setup Guide -->
     <string name="guide_title">SETUP GUIDE</string>
-    <string name="guide_step_1">1. Pair Camera\nWireless Settings > Bluetooth > Pair.</string>
-    <string name="guide_step_2">2. Drive Mode\nMUST be \'Remote Control\' or \'Timer/Remote\'.</string>
-    <string name="guide_step_3">3. Manual Focus\nSwitch lens to MF for reliable shots.</string>
-    <string name="guide_step_4">4. App Settings\nUse wheels to set interval/count.</string>
+    <string name="guide_step_1">1. Pair Camera\nWireless communication settings > Bluetooth function > Remote function > Remote > Pairing</string>
+    <string name="guide_step_2">2. Drive Mode\nMUST be \'Self-timer:10sec/remote\'.</string>
+    <string name="guide_step_3">3. Manual Focus\nSwitch lens to MF mode for reliable shots.</string>
+    <string name="guide_step_4">4. App Settings\nUse wheels to set parameters.</string>
     <string name="about_title">ABOUT</string>
-    <string name="about_desc">Canon Intervalometer v1.0.0\nProfessional tool for M/R series.</string>
+    <string name="about_desc">Canon Intervalometer v1.0.0\nProfessional tool Canon Camera.</string>
 
     <!-- Battery Dialog -->
     <string name="battery_title">Battery Optimization</string>

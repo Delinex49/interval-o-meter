@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.os.PowerManager;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 public class IntervalService extends Service implements BleManager.BleCallback {
 
@@ -211,7 +212,8 @@ public class IntervalService extends Service implements BleManager.BleCallback {
             Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                     .setContentTitle(getString(R.string.btn_stop))
                     .setContentText(message)
-                    .setSmallIcon(android.R.drawable.ic_menu_camera)
+                    .setSmallIcon(R.drawable.ic_shutter)
+                    .setColor(ContextCompat.getColor(this, R.color.white))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true)
                     .build();
@@ -239,7 +241,8 @@ public class IntervalService extends Service implements BleManager.BleCallback {
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(text)
-                .setSmallIcon(android.R.drawable.ic_menu_camera)
+                .setSmallIcon(R.drawable.ic_shutter)
+                .setColor(ContextCompat.getColor(this, R.color.white))
                 .setContentIntent(pendingIntent)
                 .setOngoing(isIntervalometerRunning)
                 .setPriority(isIntervalometerRunning ? NotificationCompat.PRIORITY_DEFAULT : NotificationCompat.PRIORITY_MIN)

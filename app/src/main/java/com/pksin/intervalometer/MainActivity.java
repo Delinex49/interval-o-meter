@@ -275,8 +275,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateIntervalometerButton(boolean isRunning) {
         btnShoot.setText(isRunning ? R.string.btn_stop : R.string.btn_start);
-        btnShoot.setBackgroundTintList(ContextCompat.getColorStateList(this, 
-                isRunning ? R.color.bogart_burgundy : R.color.muted_green));
+        int colorRes;
+        if (!btnShoot.isEnabled() && !isRunning) {
+            colorRes = R.color.grey_disabled;
+        } else {
+            colorRes = isRunning ? R.color.bogart_burgundy : R.color.muted_green;
+        }
+        btnShoot.setBackgroundTintList(ContextCompat.getColorStateList(this, colorRes));
+        btnShoot.setTextColor(ContextCompat.getColor(this, btnShoot.isEnabled() ? R.color.white : R.color.grey_disabled));
     }
 
     private boolean hasPermissions() {
@@ -358,6 +364,12 @@ public class MainActivity extends AppCompatActivity {
             btnConnectDrawer.setText(connectBtnText);
             btnConnectDrawer.setBackgroundTintList(ContextCompat.getColorStateList(this, 
                     isConnected ? R.color.bogart_burgundy : R.color.bogart_tan));
+
+            // PHOTO button grayscale
+            btnSingleShot.setBackgroundTintList(ContextCompat.getColorStateList(this, 
+                    btnSingleShot.isEnabled() ? R.color.bogart_grey : R.color.grey_disabled));
+            btnSingleShot.setTextColor(ContextCompat.getColor(this, 
+                    btnSingleShot.isEnabled() ? R.color.white : R.color.grey_disabled));
         });
     }
 

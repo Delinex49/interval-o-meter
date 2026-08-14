@@ -3,9 +3,10 @@
     <!-- Bogart Neutral Palette -->
     <color name="bogart_bg">#1D2326</color>
     <color name="bogart_cream">#DDDCC5</color>
-    <color name="bogart_tan">#958976</color>
+    <color name="bogart_tan">#B5A996</color>
     <color name="bogart_burgundy">#611427</color>
     <color name="bogart_grey">#6A6A61</color>
+    <color name="grey_disabled">#4D6A6A61</color>
 
     <!-- Material 3 Mappings (Dark) -->
     <color name="primary">@color/bogart_cream</color>
